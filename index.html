@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Jogak — Create a quote</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700;800&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#FAF7F1; --paper-deep:#F1ECE1; --ink:#221F1B; --ink-soft:#5C5751;
+    --jade:#2E6B5E; --jade-deep:#1F4A41; --ochre:#C97B3D; --line:#DED6C6; --radius:4px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:var(--paper);color:var(--ink);font-family:'Inter',sans-serif;line-height:1.5;}
+  .mono{font-family:'IBM Plex Mono',monospace;letter-spacing:0.06em;text-transform:uppercase;font-size:0.7rem;color:var(--ink-soft);}
+  h1,h2{font-family:'Space Grotesk',sans-serif;font-weight:600;}
+  .wrap{max-width:640px;margin:0 auto;padding:40px 20px 100px;}
+  header{display:flex;align-items:center;gap:10px;margin-bottom:34px;}
+  .logo-badge{width:32px;height:32px;border-radius:8px;background:#E5893C;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .card{background:#fff;border:1px solid var(--line);border-radius:6px;padding:22px 20px;margin-bottom:18px;}
+  .card h2{font-size:1rem;margin-bottom:16px;}
+  label{display:block;font-size:0.8rem;color:var(--ink-soft);margin-bottom:6px;margin-top:14px;}
+  label:first-child{margin-top:0;}
+  input[type=text],input[type=number],select{
+    width:100%;padding:11px 13px;border:1px solid var(--line);border-radius:var(--radius);
+    font-family:'Inter',sans-serif;font-size:0.92rem;background:var(--paper);color:var(--ink);
+  }
+  input:focus,select:focus{outline:2px solid var(--jade);outline-offset:-1px;}
+  .item-row{display:grid;grid-template-columns:1fr 60px 90px 30px;gap:8px;align-items:end;margin-bottom:10px;}
+  .item-row label{margin-top:0;}
+  .remove-btn{background:none;border:none;color:var(--ink-soft);font-size:1.1rem;cursor:pointer;padding:8px;}
+  .add-btn{margin-top:6px;background:none;border:1px dashed var(--line);color:var(--ink-soft);padding:10px;border-radius:var(--radius);width:100%;cursor:pointer;font-family:'Inter';font-size:0.85rem;}
+  .style-options{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px;}
+  .style-opt{border:2px solid var(--line);border-radius:6px;padding:10px;text-align:center;cursor:pointer;font-size:0.82rem;min-width:0;}
+  .style-opt.selected{border-color:var(--jade);background:var(--paper-deep);}
+  .style-preview{margin-bottom:10px;border-radius:4px;overflow:hidden;border:1px solid var(--line);background:#EDE9DF;height:104px;position:relative;min-width:0;}
+  .style-preview-inner{transform-origin:top left;width:680px;}
+  .color-row{display:flex;gap:10px;margin-top:14px;}
+  .swatch{width:34px;height:34px;border-radius:50%;border:2px solid transparent;cursor:pointer;}
+  .swatch.selected{border-color:var(--ink);}
+  .logo-upload{margin-top:14px;border:1px dashed var(--line);border-radius:var(--radius);padding:20px;text-align:center;font-size:0.82rem;color:var(--ink-soft);cursor:pointer;}
+  .btn-primary{width:100%;padding:15px;background:var(--jade);color:var(--paper);border:none;border-radius:var(--radius);font-family:'Space Grotesk';font-weight:600;font-size:1rem;cursor:pointer;margin-top:8px;}
+  .btn-primary:hover{background:var(--jade-deep);}
+  .hint{font-size:0.75rem;color:var(--ink-soft);margin-top:8px;}
+  .remembered{font-size:0.72rem;color:var(--jade);margin-top:6px;display:none;}
+  .remembered.show{display:block;}
+
+  .doc{font-family:'Inter',sans-serif;color:var(--ink);background:var(--paper);border-radius:6px;overflow:hidden;}
+  .jogak-mark{display:inline-grid;grid-template-columns:1fr 1fr;width:14px;height:14px;border-radius:3px;overflow:hidden;flex-shrink:0;}
+  .jogak-mark span:nth-child(1){background:var(--accent-a,var(--jade));}
+  .jogak-mark span:nth-child(2){background:var(--accent-b,var(--ochre));}
+  .jogak-mark span:nth-child(3){background:var(--accent-b,var(--ochre));}
+  .jogak-mark span:nth-child(4){background:var(--accent-a,var(--jade));}
+  .doc table{width:100%;border-collapse:collapse;}
+  .doc td{padding:12px 0;font-size:0.92rem;}
+  .doc th{text-align:left;font-size:0.66rem;text-transform:uppercase;letter-spacing:0.07em;color:var(--ink-soft);font-weight:600;padding-bottom:8px;}
+  .doc .num{text-align:right;}
+  .client-name{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:1.15rem;overflow-wrap:break-word;word-break:break-word;}
+  .min-brand,.bold-brand{overflow-wrap:break-word;word-break:break-word;min-width:0;white-space:normal;display:inline-block;max-width:100%;}
+  .doc-minimal{padding:48px 44px;}
+  .min-brand{font-family:'Space Grotesk';font-weight:600;font-size:1rem;}
+  .min-table th{border-bottom:1px solid var(--ink);}
+  .min-table td{border-bottom:1px solid var(--line);}
+  .min-total{font-family:'Space Grotesk';font-weight:700;font-size:2rem;line-height:1.1;}
+  .doc-bold{padding:0;}
+  .bold-band{background:var(--accent);color:#fff;padding:30px 32px;}
+  .bold-brand{font-family:'Space Grotesk';font-weight:800;font-size:1.3rem;color:#fff;}
+  .bold-meta{font-family:'IBM Plex Mono',monospace;font-size:0.72rem;color:#ffffffcc;margin-top:2px;}
+  .doc-bold .doc-body{padding:32px;}
+  .bold-table th{border-bottom:3px solid var(--accent);}
+  .bold-table td{border-bottom:1px solid var(--line);}
+  .bold-total-band{background:var(--accent);color:#fff;padding:22px 32px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;}
+  .bold-total-label{font-family:'IBM Plex Mono',monospace;font-size:0.78rem;text-transform:uppercase;letter-spacing:0.05em;color:#ffffffcc;}
+  .bold-total-amount{font-family:'Space Grotesk';font-weight:800;font-size:1.8rem;color:#fff;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <span class="logo-badge">
+      <svg width="18" height="18" viewBox="0 0 200 140"><path d="M20,37 L180,37 M55,37 L20,112 M55,37 L90,112 M180,37 L180,112" fill="none" stroke="#FFFDF8" stroke-width="26" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </span>
+    <span class="mono" style="text-transform:none;font-size:0.9rem;color:var(--ink);">jogak</span>
+  </header>
+
+  <h1 style="font-size:1.5rem;margin-bottom:6px;">Create a quote</h1>
+  <p style="color:var(--ink-soft);font-size:0.9rem;margin-bottom:28px;">Fill this in once — get a branded quote you can send or save as a PDF.</p>
+
+  <div class="card">
+    <h2>Client &amp; project</h2>
+    <label for="clientName">Client name</label>
+    <input type="text" id="clientName" placeholder="e.g. Studio Marlow">
+    <label for="projectTitle">Project title</label>
+    <input type="text" id="projectTitle" placeholder="e.g. Brand identity design">
+  </div>
+
+  <div class="card">
+    <h2>Line items</h2>
+    <div id="itemsList"></div>
+    <button class="add-btn" id="addItemBtn" type="button">+ Add line item</button>
+  </div>
+
+  <div class="card">
+    <h2>Currency</h2>
+    <select id="currency">
+      <option value="USD">USD ($)</option>
+      <option value="EUR">EUR (€)</option>
+      <option value="GBP">GBP (£)</option>
+      <option value="KRW">KRW (₩)</option>
+      <option value="CAD">CAD (C$)</option>
+      <option value="AUD">AUD (A$)</option>
+    </select>
+  </div>
+
+  <div class="card">
+    <h2>Your brand</h2>
+    <label for="brandName">Your studio / business name</label>
+    <input type="text" id="brandName" placeholder="e.g. Marlow Studio">
+    <label for="contactInfo">Contact info (shown on the quote)</label>
+    <input type="text" id="contactInfo" placeholder="e.g. hello@marlowstudio.com · Seoul, Korea">
+    <label>Logo</label>
+    <div class="logo-upload" id="logoUpload">
+      <input type="file" id="logoFile" accept="image/*" style="display:none;">
+      Tap to upload your logo (optional)
+    </div>
+    <label>Accent color</label>
+    <div class="color-row" id="colorRow">
+      <div class="swatch selected" style="background:#2E6B5E;" data-color="#2E6B5E"></div>
+      <div class="swatch" style="background:#C97B3D;" data-color="#C97B3D"></div>
+      <div class="swatch" style="background:#221F1B;" data-color="#221F1B"></div>
+      <div class="swatch" style="background:#5C7CFA;" data-color="#5C7CFA"></div>
+      <div class="swatch" style="background:#C9455C;" data-color="#C9455C"></div>
+    </div>
+    <label>Quote style — live preview</label>
+    <div class="style-options" id="styleOptions">
+      <div class="style-opt selected" data-style="minimal">
+        <div class="style-preview"><div class="style-preview-inner" id="previewMinimal"></div></div>
+        Minimal
+      </div>
+      <div class="style-opt" data-style="bold">
+        <div class="style-preview"><div class="style-preview-inner" id="previewBold"></div></div>
+        Bold
+      </div>
+    </div>
+    <p class="remembered" id="rememberedNote">✓ Using your saved brand details from last time — change anything above to update.</p>
+  </div>
+
+  <div class="card">
+    <h2>Notes / payment terms <span style="color:var(--ink-soft);font-weight:400;">(optional)</span></h2>
+    <input type="text" id="notes" placeholder="e.g. 50% deposit to begin, balance due on completion">
+  </div>
+
+  <button class="btn-primary" id="generateBtn" type="button">Generate quote →</button>
+  <p class="hint" style="text-align:center;">The next step will polish your wording with AI before generating the final document.</p>
+
+</div>
+
+<script>
+function renderQuoteHTML(data){
+  const currencySymbols = { USD:'$', EUR:'€', GBP:'£', KRW:'₩', CAD:'C$', AUD:'A$' };
+  const sym = currencySymbols[data.currency] || '$';
+  const fmt = (n) => sym + Number(n).toLocaleString(undefined,{minimumFractionDigits:data.currency==='KRW'?0:2,maximumFractionDigits:data.currency==='KRW'?0:2});
+  const accent = data.color || '#2E6B5E';
+  let total = 0;
+  const rows = (data.items||[]).map(item=>{
+    const lineTotal=(item.qty||1)*(item.price||0); total+=lineTotal;
+    return `<tr><td>${item.desc}</td><td class="num">${item.qty}</td><td class="num">${fmt(item.price)}</td><td class="num">${fmt(lineTotal)}</td></tr>`;
+  }).join('');
+  const today = new Date();
+  const dateStr = today.toLocaleDateString(undefined,{year:'numeric',month:'short',day:'numeric'});
+  const logoImg = data.logo ? `<img src="${data.logo}" style="width:36px;height:36px;border-radius:6px;object-fit:cover;">` : `<span style="width:36px;height:36px;border-radius:6px;background:${accent};display:inline-block;"></span>`;
+
+  if(data.style === 'bold'){
+    return `
+    <div class="doc doc-bold" style="--accent:${accent};">
+      <div class="bold-band">
+        <div style="display:flex;align-items:center;gap:12px;">
+          ${logoImg}
+          <div><div class="bold-brand"><span class="jogak-mark" style="margin-right:8px;vertical-align:middle;--accent-a:#ffffffe0;--accent-b:#221F1B;"><span></span><span></span><span></span><span></span></span>${data.brandName||'Your studio'}</div><div class="bold-meta">${data.contactInfo? data.contactInfo+' · ':''}JG-1234 · ${dateStr}</div></div>
+        </div>
+      </div>
+      <div class="doc-body">
+        <div class="mono" style="margin-bottom:4px;">Prepared for</div>
+        <div class="client-name">${data.clientName||'Client'}</div>
+        <div style="color:var(--ink-soft);font-size:0.9rem;margin-bottom:22px;">${data.projectTitle||''}</div>
+        <table class="bold-table"><thead><tr><th>Description</th><th class="num">Qty</th><th class="num">Price</th><th class="num">Total</th></tr></thead><tbody>${rows}</tbody></table>
+      </div>
+      <div class="bold-total-band">
+        <div class="bold-total-label">Total due from ${data.clientName||'client'}</div>
+        <div class="bold-total-amount">${fmt(total)}</div>
+      </div>
+      ${data.notes ? `<div style="padding:16px 32px;font-size:0.85rem;color:var(--ink-soft);border-top:1px solid var(--line);">${data.notes}</div>` : ''}
+    </div>`;
+  }
+  return `
+  <div class="doc doc-minimal" style="--accent:${accent};">
+    <div style="padding:48px 44px 0;">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:40px;flex-wrap:wrap;gap:12px;">
+      <div style="display:flex;align-items:center;gap:9px;min-width:0;flex:1 1 auto;">
+        <span class="jogak-mark" style="--accent-a:${accent};--accent-b:var(--ink);"><span></span><span></span><span></span><span></span></span>
+        <span class="min-brand">${data.brandName||'Your studio'}${data.contactInfo? '<div style="font-weight:400;font-size:0.76rem;color:var(--ink-soft);font-family:\'Inter\';margin-top:2px;">'+data.contactInfo+'</div>':''}</span>
+      </div>
+      <div class="mono" style="text-align:right;">JG-1234<br>${dateStr}</div>
+    </div>
+    <div class="mono" style="margin-bottom:2px;">Prepared for</div>
+    <div class="client-name" style="margin-bottom:36px;">${data.clientName||'Client'}<div style="font-weight:400;font-size:0.85rem;color:var(--ink-soft);font-family:'Inter';margin-top:2px;">${data.projectTitle||''}</div></div>
+    <table class="min-table"><thead><tr><th>Description</th><th class="num">Qty</th><th class="num">Price</th><th class="num">Total</th></tr></thead><tbody>${rows}</tbody></table>
+    <div style="display:flex;justify-content:flex-end;margin:26px 0 10px;"><div style="text-align:right;"><div class="mono">Total</div><div class="min-total" style="color:${accent};">${fmt(total)}</div></div></div>
+    ${data.notes ? `<div style="font-size:0.82rem;color:var(--ink-soft);border-top:1px solid var(--line);padding-top:12px;margin-top:6px;">${data.notes}</div>` : ''}
+    </div>
+  </div>`;
+}
+
+let itemCount = 0;
+function addItem(desc = '', qty = 1, price = ''){
+  itemCount++;
+  const id = 'item_' + itemCount;
+  const row = document.createElement('div');
+  row.className = 'item-row';
+  row.id = id;
+  row.innerHTML = `
+    <div><label>Description</label><input type="text" class="item-desc" placeholder="e.g. homepage redesign" value="${desc}"></div>
+    <div><label>Qty</label><input type="number" class="item-qty" value="${qty}" min="1"></div>
+    <div><label>Price</label><input type="number" class="item-price" value="${price}" min="0"></div>
+    <button class="remove-btn" type="button" onclick="document.getElementById('${id}').remove(); updatePreviews();">✕</button>
+  `;
+  document.getElementById('itemsList').appendChild(row);
+}
+addItem('Brand identity design', 1, 900);
+addItem('Two rounds of revisions', 1, 200);
+document.getElementById('addItemBtn').addEventListener('click', () => { addItem(); updatePreviews(); });
+document.getElementById('itemsList').addEventListener('input', updatePreviews);
+
+const PREF_KEY = 'jogak_prefs';
+let logoDataUrl = null;
+
+function loadPrefs(){
+  try{
+    const saved = JSON.parse(localStorage.getItem(PREF_KEY) || '{}');
+    if(saved.brandName){ document.getElementById('brandName').value = saved.brandName; }
+    if(saved.contactInfo){ document.getElementById('contactInfo').value = saved.contactInfo; }
+    if(saved.color){ document.querySelectorAll('.swatch').forEach(s => s.classList.toggle('selected', s.dataset.color === saved.color)); }
+    if(saved.style){ document.querySelectorAll('.style-opt').forEach(s => s.classList.toggle('selected', s.dataset.style === saved.style)); }
+    if(saved.logo){ logoDataUrl = saved.logo; document.getElementById('logoUpload').textContent = '✓ Saved logo loaded'; }
+    if(saved.brandName || saved.color) document.getElementById('rememberedNote').classList.add('show');
+  }catch(e){}
+}
+function savePrefs(){
+  localStorage.setItem(PREF_KEY, JSON.stringify({
+    brandName: document.getElementById('brandName').value,
+    contactInfo: document.getElementById('contactInfo').value,
+    color: document.querySelector('.swatch.selected').dataset.color,
+    style: document.querySelector('.style-opt.selected').dataset.style,
+    logo: logoDataUrl
+  }));
+}
+
+function sampleItems(){
+  const rows = Array.from(document.querySelectorAll('.item-row'));
+  if(rows.length){
+    return rows.map(row => ({desc: row.querySelector('.item-desc').value || 'Line item', qty: Number(row.querySelector('.item-qty').value)||1, price: Number(row.querySelector('.item-price').value)||0}));
+  }
+  return [{desc:'Brand identity design', qty:1, price:900}];
+}
+function currentData(style){
+  return {
+    clientName: document.getElementById('clientName').value || 'Studio Marlow',
+    projectTitle: document.getElementById('projectTitle').value || 'Brand identity',
+    brandName: document.getElementById('brandName').value || 'Your studio',
+    contactInfo: document.getElementById('contactInfo').value,
+    notes: document.getElementById('notes').value,
+    currency: document.getElementById('currency').value,
+    color: document.querySelector('.swatch.selected').dataset.color,
+    style: style,
+    logo: logoDataUrl,
+    items: sampleItems()
+  };
+}
+function updatePreviews(){
+  const minEl = document.getElementById('previewMinimal');
+  const boldEl = document.getElementById('previewBold');
+  minEl.innerHTML = renderQuoteHTML(currentData('minimal'));
+  boldEl.innerHTML = renderQuoteHTML(currentData('bold'));
+  [minEl, boldEl].forEach(el => {
+    const container = el.parentElement; // .style-preview
+    const scale = container.clientWidth / 680;
+    el.style.transform = `scale(${scale})`;
+  });
+}
+window.addEventListener('resize', updatePreviews);
+
+document.getElementById('logoUpload').addEventListener('click', () => document.getElementById('logoFile').click());
+document.getElementById('logoFile').addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  if(file){
+    document.getElementById('logoUpload').textContent = '✓ ' + file.name;
+    const reader = new FileReader();
+    reader.onload = () => { logoDataUrl = reader.result; updatePreviews(); savePrefs(); };
+    reader.readAsDataURL(file);
+  }
+});
+document.getElementById('colorRow').addEventListener('click', (e) => {
+  if(e.target.classList.contains('swatch')){
+    document.querySelectorAll('.swatch').forEach(s => s.classList.remove('selected'));
+    e.target.classList.add('selected');
+    updatePreviews(); savePrefs();
+  }
+});
+document.getElementById('styleOptions').addEventListener('click', (e) => {
+  const opt = e.target.closest('.style-opt');
+  if(opt){
+    document.querySelectorAll('.style-opt').forEach(s => s.classList.remove('selected'));
+    opt.classList.add('selected');
+    savePrefs();
+  }
+});
+['brandName','contactInfo','notes','clientName','projectTitle','currency'].forEach(id => {
+  document.getElementById(id).addEventListener('input', () => { updatePreviews(); savePrefs(); });
+});
+
+document.getElementById('generateBtn').addEventListener('click', async () => {
+  const btn = document.getElementById('generateBtn');
+  btn.textContent = 'Polishing wording…';
+  btn.disabled = true;
+
+  const items = Array.from(document.querySelectorAll('.item-row')).map(row => ({
+    desc: row.querySelector('.item-desc').value,
+    qty: Number(row.querySelector('.item-qty').value),
+    price: Number(row.querySelector('.item-price').value)
+  }));
+
+  try{
+    const res = await fetch('/api/polish', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({items: items.map(i=>i.desc)})});
+    const result = await res.json();
+    if(result.polished && result.polished.length === items.length){ items.forEach((item,idx) => item.desc = result.polished[idx]); }
+  }catch(e){ console.log('AI polish unavailable right now, using your original wording.'); }
+
+  savePrefs();
+  const data = {
+    clientName: document.getElementById('clientName').value,
+    projectTitle: document.getElementById('projectTitle').value,
+    brandName: document.getElementById('brandName').value,
+    contactInfo: document.getElementById('contactInfo').value,
+    notes: document.getElementById('notes').value,
+    currency: document.getElementById('currency').value,
+    color: document.querySelector('.swatch.selected').dataset.color,
+    style: document.querySelector('.style-opt.selected').dataset.style,
+    logo: logoDataUrl,
+    items
+  };
+  const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(data))));
+  location.href = 'result.html?data=' + encoded;
+});
+
+loadPrefs();
+updatePreviews();
+</script>
+</body>
+</html>

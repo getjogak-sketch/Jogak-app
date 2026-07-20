@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Jogak — Your quote</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700;800&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{ --paper:#FAF7F1; --ink:#221F1B; --ink-soft:#5C5751; --line:#DED6C6; }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:#EDE9DF;color:var(--ink);font-family:'Inter',sans-serif;line-height:1.5;padding:24px 16px 80px;}
+  .mono{font-family:'IBM Plex Mono',monospace;letter-spacing:0.06em;text-transform:uppercase;font-size:0.68rem;color:var(--ink-soft);}
+  .toolbar{max-width:680px;margin:0 auto 18px;display:flex;justify-content:flex-end;gap:8px;}
+  .btn{font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:0.85rem;padding:11px 18px;border-radius:4px;border:1px solid var(--ink-soft);cursor:pointer;background:transparent;color:var(--ink);}
+  .btn.active{background:var(--ink);color:#fff;border-color:var(--ink);}
+  .btn-print{background:var(--ink);color:var(--paper);border-color:var(--ink);}
+  #docHolder{max-width:680px;margin:0 auto;}
+  @media print{ body{background:#fff;padding:0;} .toolbar{display:none;} #docHolder{max-width:none;} #approveHolder{display:none;} }
+</style>
+</head>
+<body>
+  <div class="toolbar">
+    <button class="btn" onclick="history.back()">← Edit</button>
+    <button class="btn" id="btnMinimal" onclick="setStyle('minimal')">Minimal</button>
+    <button class="btn" id="btnBold" onclick="setStyle('bold')">Bold</button>
+    <button class="btn btn-print" onclick="window.print()">Save as PDF</button>
+  </div>
+  <div id="docHolder"></div>
+  <div id="approveHolder" style="max-width:680px;margin:16px auto 0;"></div>
+
+<script>
+/* ---------- shared quote renderer (also used inline by index.html) ---------- */
+function renderQuoteHTML(data){
+  const currencySymbols = { USD:'$', EUR:'€', GBP:'£', KRW:'₩', CAD:'C$', AUD:'A$' };
+  const sym = currencySymbols[data.currency] || '$';
+  const fmt = (n) => sym + Number(n).toLocaleString(undefined,{minimumFractionDigits:data.currency==='KRW'?0:2,maximumFractionDigits:data.currency==='KRW'?0:2});
+  const accent = data.color || '#2E6B5E';
+  let total = 0;
+  const rows = (data.items||[]).map(item=>{
+    const lineTotal=(item.qty||1)*(item.price||0); total+=lineTotal;
+    return `<tr><td>${item.desc}</td><td class="num">${item.qty}</td><td class="num">${fmt(item.price)}</td><td class="num">${fmt(lineTotal)}</td></tr>`;
+  }).join('');
+  const today = new Date();
+  const validDate = new Date(today); validDate.setDate(validDate.getDate()+14);
+  const dateStr = today.toLocaleDateString(undefined,{year:'numeric',month:'short',day:'numeric'});
+  const validStr = validDate.toLocaleDateString(undefined,{year:'numeric',month:'short',day:'numeric'});
+  const quoteNum = 'JG-' + (data._num || Math.floor(1000+Math.random()*9000));
+  const logoImg = data.logo ? `<img src="${data.logo}" style="width:36px;height:36px;border-radius:6px;object-fit:cover;">` : `<span style="width:36px;height:36px;border-radius:6px;background:${accent};display:inline-block;"></span>`;
+
+  if(data.style === 'bold'){
+    return `
+    <div class="doc doc-bold" style="--accent:${accent};">
+      <div class="bold-band">
+        <div style="display:flex;align-items:center;gap:12px;">
+          ${logoImg}
+          <div>
+            <div class="bold-brand"><span class="jogak-mark" style="margin-right:8px;vertical-align:middle;--accent-a:#ffffffe0;--accent-b:#221F1B;"><span></span><span></span><span></span><span></span></span>${data.brandName||'Your studio'}</div>
+            <div class="bold-meta">${data.contactInfo? data.contactInfo+' · ':''}${quoteNum} · ${dateStr}</div>
+          </div>
+        </div>
+      </div>
+      <div class="doc-body">
+        <div class="mono" style="margin-bottom:4px;">Prepared for</div>
+        <div class="client-name">${data.clientName||'Client'}</div>
+        <div style="color:var(--ink-soft);font-size:0.9rem;margin-bottom:22px;">${data.projectTitle||''}</div>
+        <table class="bold-table"><thead><tr><th>Description</th><th class="num">Qty</th><th class="num">Price</th><th class="num">Total</th></tr></thead><tbody>${rows}</tbody></table>
+      </div>
+      <div class="bold-total-band">
+        <div class="bold-total-label">Total due from ${data.clientName||'client'}</div>
+        <div class="bold-total-amount">${fmt(total)}</div>
+      </div>
+      <div class="doc-body" style="padding-top:16px;">
+        <div style="border-top:1px solid var(--line);padding-top:16px;font-size:0.85rem;color:var(--ink-soft);">
+          ${data.notes ? data.notes+'<br>' : ''}Thank you for the opportunity to work together.
+          <div style="font-size:0.76rem;margin-top:6px;">Valid until ${validStr}</div>
+        </div>
+      </div>
+    </div>`;
+  }
+
+  return `
+  <div class="doc doc-minimal" style="--accent:${accent};">
+    <div style="padding:48px 44px 0;">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:40px;flex-wrap:wrap;gap:12px;">
+      <div style="display:flex;align-items:center;gap:9px;min-width:0;flex:1 1 auto;">
+        <span class="jogak-mark" style="--accent-a:${accent};--accent-b:var(--ink);"><span></span><span></span><span></span><span></span></span>
+        <span class="min-brand">${data.brandName||'Your studio'}${data.contactInfo? '<div style="font-weight:400;font-size:0.76rem;color:var(--ink-soft);font-family:\'Inter\';margin-top:2px;">'+data.contactInfo+'</div>':''}</span>
+      </div>
+      <div class="mono" style="text-align:right;">${quoteNum}<br>${dateStr}</div>
+    </div>
+    <div class="mono" style="margin-bottom:2px;">Prepared for</div>
+    <div class="client-name" style="margin-bottom:36px;">${data.clientName||'Client'}<div style="font-weight:400;font-size:0.85rem;color:var(--ink-soft);font-family:'Inter';margin-top:2px;">${data.projectTitle||''}</div></div>
+    <table class="min-table"><thead><tr><th>Description</th><th class="num">Qty</th><th class="num">Price</th><th class="num">Total</th></tr></thead><tbody>${rows}</tbody></table>
+    <div style="display:flex;justify-content:flex-end;margin:26px 0 40px;">
+      <div style="text-align:right;">
+        <div class="mono">Total</div>
+        <div class="min-total" style="color:${accent};">${fmt(total)}</div>
+      </div>
+    </div>
+    <div style="border-top:1px solid var(--line);padding-top:16px;font-size:0.85rem;color:var(--ink-soft);">
+      ${data.notes ? data.notes+'<br>' : ''}Thank you for the opportunity to work together.
+      <div style="font-size:0.76rem;margin-top:6px;">Valid until ${validStr}</div>
+    </div>
+    </div>
+  </div>`;
+}
+
+/* shared CSS for the doc (injected once) */
+const styleTag = document.createElement('style');
+styleTag.textContent = `
+  .doc{font-family:'Inter',sans-serif;color:var(--ink);background:var(--paper);border-radius:6px;box-shadow:0 2px 12px rgba(0,0,0,0.08);overflow:hidden;}
+  .jogak-mark{display:inline-grid;grid-template-columns:1fr 1fr;width:14px;height:14px;border-radius:3px;overflow:hidden;flex-shrink:0;}
+  .jogak-mark span:nth-child(1){background:var(--accent-a,var(--jade,#2E6B5E));}
+  .jogak-mark span:nth-child(2){background:var(--accent-b,var(--ochre,#C97B3D));}
+  .jogak-mark span:nth-child(3){background:var(--accent-b,var(--ochre,#C97B3D));}
+  .jogak-mark span:nth-child(4){background:var(--accent-a,var(--jade,#2E6B5E));}
+  .doc table{width:100%;border-collapse:collapse;}
+  .doc td{padding:12px 0;font-size:0.92rem;}
+  .doc th{text-align:left;font-size:0.66rem;text-transform:uppercase;letter-spacing:0.07em;color:var(--ink-soft);font-weight:600;padding-bottom:8px;}
+  .doc .num{text-align:right;}
+  .client-name{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:1.15rem;overflow-wrap:break-word;word-break:break-word;}
+  .min-brand,.bold-brand{overflow-wrap:break-word;word-break:break-word;min-width:0;white-space:normal;display:inline-block;max-width:100%;}
+
+  .doc-minimal{padding:48px 44px;}
+  .min-brand{font-family:'Space Grotesk';font-weight:600;font-size:1rem;}
+  .min-table th{border-bottom:1px solid var(--ink);}
+  .min-table td{border-bottom:1px solid var(--line);}
+  .min-total{font-family:'Space Grotesk';font-weight:700;font-size:2rem;line-height:1.1;}
+
+  .doc-bold{padding:0;}
+  .bold-band{background:var(--accent);color:#fff;padding:30px 32px;}
+  .bold-brand{font-family:'Space Grotesk';font-weight:800;font-size:1.3rem;color:#fff;}
+  .bold-meta{font-family:'IBM Plex Mono',monospace;font-size:0.72rem;color:#ffffffcc;margin-top:2px;}
+  .doc-bold .doc-body{padding:32px;}
+  .bold-table th{border-bottom:3px solid var(--accent);}
+  .bold-table td{border-bottom:1px solid var(--line);}
+  .bold-total-band{background:var(--accent);color:#fff;padding:22px 32px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;}
+  .bold-total-label{font-family:'IBM Plex Mono',monospace;font-size:0.78rem;text-transform:uppercase;letter-spacing:0.05em;color:#ffffffcc;}
+  .bold-total-amount{font-family:'Space Grotesk';font-weight:800;font-size:1.8rem;color:#fff;}
+`;
+document.head.appendChild(styleTag);
+
+/* ---------- page logic ---------- */
+const params = new URLSearchParams(location.search);
+let data = {};
+try { data = JSON.parse(decodeURIComponent(escape(atob(params.get('data')||'')))); }
+catch(e){ data = { clientName:'Sample Client', projectTitle:'Sample project', currency:'USD', color:'#2E6B5E', style:'minimal',
+  items:[{desc:'Homepage design',qty:1,price:800},{desc:'Two rounds of revisions',qty:1,price:150}] }; }
+
+const holder = document.getElementById('docHolder');
+let currentStyle = data.style || 'minimal';
+
+function setStyle(s){
+  currentStyle = s;
+  data.style = s;
+  holder.innerHTML = renderQuoteHTML(data);
+  document.getElementById('btnMinimal').classList.toggle('active', s==='minimal');
+  document.getElementById('btnBold').classList.toggle('active', s==='bold');
+}
+setStyle(currentStyle);
+
+function renderApprove(){
+  const holder = document.getElementById('approveHolder');
+  const freelancerEmail = (data.contactInfo||'').match(/[\w.+-]+@[\w-]+\.[\w.-]+/);
+  holder.innerHTML = `
+    <div style="background:#fff;border:1px solid var(--line);border-radius:6px;padding:22px 24px;">
+      <div style="font-family:'Space Grotesk';font-weight:600;font-size:0.95rem;margin-bottom:12px;">Approve this quote</div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;">
+        <input id="approveName" type="text" placeholder="Type your name to approve" style="flex:1;min-width:180px;padding:11px 13px;border:1px solid var(--line);border-radius:4px;font-family:'Inter';font-size:0.92rem;">
+        <button class="btn btn-print" id="approveBtn" style="margin:0;">Approve</button>
+      </div>
+      <p style="font-size:0.78rem;color:var(--ink-soft);margin-top:8px;">This confirms you accept the quote above. ${freelancerEmail ? 'A note will be sent to '+freelancerEmail[0]+'.' : ''}</p>
+    </div>`;
+  document.getElementById('approveBtn').addEventListener('click', () => {
+    const name = document.getElementById('approveName').value.trim();
+    if(!name){ alert('Please type your name first.'); return; }
+    const today = new Date().toLocaleDateString(undefined,{year:'numeric',month:'short',day:'numeric'});
+    holder.innerHTML = `
+      <div style="background:#fff;border:2px solid var(--jade,#2E6B5E);border-radius:6px;padding:22px 24px;">
+        <div style="font-family:'Space Grotesk';font-weight:700;font-size:1rem;color:var(--jade,#2E6B5E);">✓ Approved by ${name}</div>
+        <div style="font-size:0.82rem;color:var(--ink-soft);margin-top:4px;">${today}</div>
+      </div>`;
+    if(freelancerEmail){
+      const subject = encodeURIComponent('Quote approved — ' + (data.clientName||''));
+      const body = encodeURIComponent(`${name} approved the quote for "${data.projectTitle||'your project'}".\n\nApproved on ${today}.`);
+      window.location.href = `mailto:${freelancerEmail[0]}?subject=${subject}&body=${body}`;
+    }
+  });
+}
+renderApprove();
+</script>
+</body>
+</html>
