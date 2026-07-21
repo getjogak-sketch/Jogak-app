@@ -23,13 +23,41 @@
     <button class="btn" onclick="history.back()">← Edit</button>
     <button class="btn" id="btnMinimal" onclick="setStyle('minimal')">Minimal</button>
     <button class="btn" id="btnBold" onclick="setStyle('bold')">Bold</button>
-    <button class="btn btn-print" onclick="window.print()">Save as PDF</button>
+    <button class="btn btn-print" onclick="printWithFilename()">Save as PDF</button>
   </div>
   <div id="docHolder"></div>
   <div id="approveHolder" style="max-width:680px;margin:16px auto 0;"></div>
 
 <script>
 /* ---------- shared quote renderer (also used inline by index.html) ---------- */
+function proposalSectionsHTML(data, accent){
+  if(data.docType !== 'proposal') return '';
+  const overview = data.overview ? `<p style="font-size:0.92rem;line-height:1.6;margin-bottom:26px;color:var(--ink);">${data.overview}</p>` : '';
+  const scope = (data.scopeItems && data.scopeItems.length) ? `
+    <div class="mono" style="margin-bottom:10px;">Scope of work</div>
+    <ul style="list-style:none;margin-bottom:26px;">
+      ${data.scopeItems.map(s => `<li style="display:flex;gap:10px;padding:7px 0;border-bottom:1px solid var(--line);font-size:0.9rem;"><span style="width:6px;height:6px;border-radius:50%;background:${accent};margin-top:7px;flex-shrink:0;"></span>${s}</li>`).join('')}
+    </ul>` : '';
+  const timeline = (data.timeline && data.timeline.length) ? `
+    <div class="mono" style="margin-bottom:10px;">Timeline</div>
+    <div style="margin-bottom:30px;">
+      ${data.timeline.map(t => `<div style="display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-bottom:1px solid var(--line);font-size:0.9rem;"><span>${t.phase}</span><span class="mono" style="color:var(--ink-soft);">${t.duration}</span></div>`).join('')}
+    </div>` : '';
+  const investmentLabel = `<div class="mono" style="margin-bottom:10px;">Investment</div>`;
+  return overview + scope + timeline + investmentLabel;
+}
+
+function termsHTML(data){
+  const rows = [];
+  if(data.revisions) rows.push(['Revisions', data.revisions]);
+  if(data.usageRights) rows.push(['Usage rights', data.usageRights]);
+  if(data.delivery) rows.push(['Delivery', data.delivery]);
+  if(!rows.length) return '';
+  return `<div style="margin-top:14px;">${rows.map(([label,val]) =>
+    `<div style="display:flex;gap:14px;padding:5px 0;font-size:0.82rem;color:var(--ink-soft);"><span class="mono" style="min-width:90px;flex-shrink:0;">${label}</span><span>${val}</span></div>`
+  ).join('')}</div>`;
+}
+
 function renderQuoteHTML(data){
   const currencySymbols = { USD:'$', EUR:'€', GBP:'£', KRW:'₩', CAD:'C$', AUD:'A$' };
   const sym = currencySymbols[data.currency] || '$';
@@ -40,10 +68,17 @@ function renderQuoteHTML(data){
     const lineTotal=(item.qty||1)*(item.price||0); total+=lineTotal;
     return `<tr><td>${item.desc}</td><td class="num">${item.qty}</td><td class="num">${fmt(item.price)}</td><td class="num">${fmt(lineTotal)}</td></tr>`;
   }).join('');
+  const subtotal = total;
+  const taxAmount = (data.docType === 'invoice' && data.taxEnabled) ? subtotal * ((data.taxRate||0)/100) : 0;
+  const grandTotal = subtotal + taxAmount;
+  const taxRowsHTML = (data.docType === 'invoice' && data.taxEnabled) ? `
+    <div style="display:flex;justify-content:space-between;font-size:0.85rem;color:var(--ink-soft);padding:3px 0;"><span>Subtotal</span><span>${fmt(subtotal)}</span></div>
+    <div style="display:flex;justify-content:space-between;font-size:0.85rem;color:var(--ink-soft);padding:3px 0;"><span>${data.taxLabel||'Tax'} (${data.taxRate||0}%)</span><span>${fmt(taxAmount)}</span></div>
+  ` : '';
   const today = new Date();
   const validDate = new Date(today); validDate.setDate(validDate.getDate()+14);
-  const dateStr = today.toLocaleDateString(undefined,{year:'numeric',month:'short',day:'numeric'});
-  const validStr = validDate.toLocaleDateString(undefined,{year:'numeric',month:'short',day:'numeric'});
+  const dateStr = today.toLocaleDateString('en-US',{year:'numeric',month:'short',day:'numeric'});
+  const validStr = validDate.toLocaleDateString('en-US',{year:'numeric',month:'short',day:'numeric'});
   const quoteNum = 'JG-' + (data._num || Math.floor(1000+Math.random()*9000));
   const logoImg = data.logo ? `<img src="${data.logo}" style="width:36px;height:36px;border-radius:6px;object-fit:cover;">` : `<span style="width:36px;height:36px;border-radius:6px;background:${accent};display:inline-block;"></span>`;
 
@@ -63,16 +98,19 @@ function renderQuoteHTML(data){
         <div class="mono" style="margin-bottom:4px;">Prepared for</div>
         <div class="client-name">${data.clientName||'Client'}</div>
         <div style="color:var(--ink-soft);font-size:0.9rem;margin-bottom:22px;">${data.projectTitle||''}</div>
+        ${proposalSectionsHTML(data, accent)}
         <table class="bold-table"><thead><tr><th>Description</th><th class="num">Qty</th><th class="num">Price</th><th class="num">Total</th></tr></thead><tbody>${rows}</tbody></table>
+        ${taxRowsHTML}
       </div>
       <div class="bold-total-band">
-        <div class="bold-total-label">Total due from ${data.clientName||'client'}</div>
-        <div class="bold-total-amount">${fmt(total)}</div>
+        <div class="bold-total-label">${data.docType==='invoice' ? 'Amount due' : 'Total due'} from ${data.clientName||'client'}${data.docType==='invoice' && data.dueTerms ? ' · '+data.dueTerms : ''}</div>
+        <div class="bold-total-amount">${fmt(grandTotal)}</div>
       </div>
       <div class="doc-body" style="padding-top:16px;">
+        ${data.docType==='invoice' && data.paymentDetails ? `<div style="font-size:0.82rem;color:var(--ink-soft);margin-bottom:14px;"><span class="mono">Payment</span><br>${data.paymentDetails}</div>` : ''}
         <div style="border-top:1px solid var(--line);padding-top:16px;font-size:0.85rem;color:var(--ink-soft);">
-          ${data.notes ? data.notes+'<br>' : ''}Thank you for the opportunity to work together.
-          <div style="font-size:0.76rem;margin-top:6px;">Valid until ${validStr}</div>
+          ${data.notes ? data.notes+'<br>' : ''}Thank you for the opportunity to work together.${termsHTML(data)}
+          ${data.docType==='invoice' ? '' : `<div style="font-size:0.76rem;margin-top:6px;">Valid until ${validStr}</div>`}
         </div>
       </div>
     </div>`;
@@ -90,16 +128,19 @@ function renderQuoteHTML(data){
     </div>
     <div class="mono" style="margin-bottom:2px;">Prepared for</div>
     <div class="client-name" style="margin-bottom:36px;">${data.clientName||'Client'}<div style="font-weight:400;font-size:0.85rem;color:var(--ink-soft);font-family:'Inter';margin-top:2px;">${data.projectTitle||''}</div></div>
+    ${proposalSectionsHTML(data, accent)}
     <table class="min-table"><thead><tr><th>Description</th><th class="num">Qty</th><th class="num">Price</th><th class="num">Total</th></tr></thead><tbody>${rows}</tbody></table>
+    ${taxRowsHTML ? `<div style="margin-top:14px;">${taxRowsHTML}</div>` : ''}
     <div style="display:flex;justify-content:flex-end;margin:26px 0 40px;">
       <div style="text-align:right;">
-        <div class="mono">Total</div>
-        <div class="min-total" style="color:${accent};">${fmt(total)}</div>
+        <div class="mono">${data.docType==='invoice' ? 'Amount due'+(data.dueTerms?' · '+data.dueTerms:'') : 'Total'}</div>
+        <div class="min-total" style="color:${accent};">${fmt(grandTotal)}</div>
       </div>
     </div>
+    ${data.docType==='invoice' && data.paymentDetails ? `<div style="font-size:0.82rem;color:var(--ink-soft);margin-bottom:14px;"><span class="mono">Payment</span><br>${data.paymentDetails}</div>` : ''}
     <div style="border-top:1px solid var(--line);padding-top:16px;font-size:0.85rem;color:var(--ink-soft);">
-      ${data.notes ? data.notes+'<br>' : ''}Thank you for the opportunity to work together.
-      <div style="font-size:0.76rem;margin-top:6px;">Valid until ${validStr}</div>
+      ${data.notes ? data.notes+'<br>' : ''}Thank you for the opportunity to work together.${termsHTML(data)}
+      ${data.docType==='invoice' ? '' : `<div style="font-size:0.76rem;margin-top:6px;">Valid until ${validStr}</div>`}
     </div>
     </div>
   </div>`;
@@ -148,6 +189,16 @@ catch(e){ data = { clientName:'Sample Client', projectTitle:'Sample project', cu
   items:[{desc:'Homepage design',qty:1,price:800},{desc:'Two rounds of revisions',qty:1,price:150}] }; }
 
 const holder = document.getElementById('docHolder');
+
+function printWithFilename(){
+  const docLabel = data.docType === 'invoice' ? 'Invoice' : data.docType === 'proposal' ? 'Proposal' : 'Quote';
+  const clientSlug = (data.clientName || 'Client').replace(/[^a-zA-Z0-9]+/g,'_');
+  const dateSlug = new Date().toISOString().slice(0,10);
+  const originalTitle = document.title;
+  document.title = `Jogak_${docLabel}_${clientSlug}_${dateSlug}`;
+  window.print();
+  setTimeout(() => { document.title = originalTitle; }, 500);
+}
 let currentStyle = data.style || 'minimal';
 
 function setStyle(s){
@@ -164,7 +215,7 @@ function renderApprove(){
   const freelancerEmail = (data.contactInfo||'').match(/[\w.+-]+@[\w-]+\.[\w.-]+/);
   holder.innerHTML = `
     <div style="background:#fff;border:1px solid var(--line);border-radius:6px;padding:22px 24px;">
-      <div style="font-family:'Space Grotesk';font-weight:600;font-size:0.95rem;margin-bottom:12px;">Approve this quote</div>
+      <div style="font-family:'Space Grotesk';font-weight:600;font-size:0.95rem;margin-bottom:12px;">${data.docType==='invoice' ? 'Confirm receipt of this invoice' : 'Approve this '+(data.docType==='proposal'?'proposal':'quote')}</div>
       <div style="display:flex;gap:10px;flex-wrap:wrap;">
         <input id="approveName" type="text" placeholder="Type your name to approve" style="flex:1;min-width:180px;padding:11px 13px;border:1px solid var(--line);border-radius:4px;font-family:'Inter';font-size:0.92rem;">
         <button class="btn btn-print" id="approveBtn" style="margin:0;">Approve</button>
@@ -174,7 +225,7 @@ function renderApprove(){
   document.getElementById('approveBtn').addEventListener('click', () => {
     const name = document.getElementById('approveName').value.trim();
     if(!name){ alert('Please type your name first.'); return; }
-    const today = new Date().toLocaleDateString(undefined,{year:'numeric',month:'short',day:'numeric'});
+    const today = new Date().toLocaleDateString('en-US',{year:'numeric',month:'short',day:'numeric'});
     holder.innerHTML = `
       <div style="background:#fff;border:2px solid var(--jade,#2E6B5E);border-radius:6px;padding:22px 24px;">
         <div style="font-family:'Space Grotesk';font-weight:700;font-size:1rem;color:var(--jade,#2E6B5E);">✓ Approved by ${name}</div>
