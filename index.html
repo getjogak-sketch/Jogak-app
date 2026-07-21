@@ -18,6 +18,11 @@
   header{display:flex;align-items:center;gap:10px;margin-bottom:34px;}
   .logo-badge{width:32px;height:32px;border-radius:8px;background:#E5893C;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
   .card{background:#fff;border:1px solid var(--line);border-radius:6px;padding:22px 20px;margin-bottom:18px;}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  .doctype-btn{flex:1;border:2px solid var(--line);border-radius:6px;padding:14px 10px;text-align:center;cursor:pointer;font-family:'Space Grotesk';font-weight:600;font-size:0.92rem;background:#fff;color:var(--ink);}
+  .doctype-btn.selected{border-color:var(--jade);background:var(--paper-deep);}
+  .doctype-btn .hint{display:block;font-family:'Inter';font-weight:400;font-size:0.74rem;color:var(--ink-soft);margin-top:3px;}
+
   .card h2{font-size:1rem;margin-bottom:16px;}
   label{display:block;font-size:0.8rem;color:var(--ink-soft);margin-bottom:6px;margin-top:14px;}
   label:first-child{margin-top:0;}
@@ -84,8 +89,49 @@
     <span class="mono" style="text-transform:none;font-size:0.9rem;color:var(--ink);">jogak</span>
   </header>
 
-  <h1 style="font-size:1.5rem;margin-bottom:6px;">Create a quote</h1>
-  <p style="color:var(--ink-soft);font-size:0.9rem;margin-bottom:28px;">Fill this in once — get a branded quote you can send or save as a PDF.</p>
+  <h1 style="font-size:1.5rem;margin-bottom:6px;">Create a document</h1>
+  <p style="color:var(--ink-soft);font-size:0.9rem;margin-bottom:18px;">Fill this in once — get a branded document you can send or save as a PDF.</p>
+
+  <div class="doctype-row" id="doctypeRow" style="display:flex;gap:8px;margin-bottom:24px;">
+    <button type="button" class="doctype-btn selected" data-doctype="quote">Quote<br><span class="hint">Price, ready to send</span></button>
+    <button type="button" class="doctype-btn" data-doctype="proposal">Proposal<br><span class="hint">Scope + timeline + price</span></button>
+    <button type="button" class="doctype-btn" data-doctype="invoice">Invoice<br><span class="hint">Formal, payment due</span></button>
+  </div>
+
+  <div class="card" id="invoiceCard" style="display:none;">
+    <h2>Invoice details</h2>
+    <label for="dueTerms">Payment due</label>
+    <select id="dueTerms">
+      <option value="Due upon receipt">Due upon receipt</option>
+      <option value="Net 7">Net 7</option>
+      <option value="Net 14">Net 14</option>
+      <option value="Net 30" selected>Net 30</option>
+    </select>
+    <label style="margin-top:14px;display:flex;align-items:center;gap:8px;">
+      <input type="checkbox" id="taxEnabled" style="width:auto;">
+      <span>Add tax</span>
+    </label>
+    <div id="taxFields" style="display:none;">
+      <div class="row2">
+        <div><label for="taxLabel">Tax label</label><input type="text" id="taxLabel" placeholder="e.g. VAT, GST"></div>
+        <div><label for="taxRate">Rate (%)</label><input type="number" id="taxRate" placeholder="e.g. 20" min="0" step="0.1"></div>
+      </div>
+    </div>
+    <label style="margin-top:14px;" for="paymentDetails">Payment details</label>
+    <input type="text" id="paymentDetails" placeholder="e.g. Bank transfer — IBAN XX00..., or PayPal: you@studio.com">
+  </div>
+
+  <div class="card" id="proposalCard" style="display:none;">
+    <h2>Proposal details</h2>
+    <label for="overview">Overview</label>
+    <input type="text" id="overview" placeholder="e.g. A refreshed identity system that positions the brand as premium and modern.">
+    <label>Scope of work</label>
+    <div id="scopeList"></div>
+    <button class="add-btn" id="addScopeBtn" type="button">+ Add scope item</button>
+    <label style="margin-top:22px;">Timeline</label>
+    <div id="timelineList"></div>
+    <button class="add-btn" id="addTimelineBtn" type="button">+ Add phase</button>
+  </div>
 
   <div class="card">
     <h2>Client &amp; project</h2>
@@ -129,8 +175,8 @@
       <div class="swatch selected" style="background:#2E6B5E;" data-color="#2E6B5E"></div>
       <div class="swatch" style="background:#C97B3D;" data-color="#C97B3D"></div>
       <div class="swatch" style="background:#221F1B;" data-color="#221F1B"></div>
-      <div class="swatch" style="background:#5C7CFA;" data-color="#5C7CFA"></div>
-      <div class="swatch" style="background:#C9455C;" data-color="#C9455C"></div>
+      <div class="swatch" style="background:#3B5166;" data-color="#3B5166"></div>
+      <div class="swatch" style="background:#7A3B4E;" data-color="#7A3B4E"></div>
     </div>
     <label>Quote style — live preview</label>
     <div class="style-options" id="styleOptions">
@@ -147,7 +193,14 @@
   </div>
 
   <div class="card">
-    <h2>Notes / payment terms <span style="color:var(--ink-soft);font-weight:400;">(optional)</span></h2>
+    <h2>Terms &amp; delivery <span style="color:var(--ink-soft);font-weight:400;">(optional)</span></h2>
+    <label for="revisions">Revisions included</label>
+    <input type="text" id="revisions" placeholder="e.g. 2 rounds included, $75 per additional round">
+    <label for="usageRights">Usage rights</label>
+    <input type="text" id="usageRights" placeholder="e.g. Commercial use, non-exclusive">
+    <label for="delivery">File delivery</label>
+    <input type="text" id="delivery" placeholder="e.g. Final files as PNG + source, upon full payment">
+    <label for="notes" style="margin-top:14px;">Other notes / payment terms</label>
     <input type="text" id="notes" placeholder="e.g. 50% deposit to begin, balance due on completion">
   </div>
 
@@ -157,6 +210,44 @@
 </div>
 
 <script>
+window.addEventListener('error', function(e){
+  const box = document.createElement('div');
+  box.style.cssText = 'position:fixed;bottom:0;left:0;right:0;background:#c0392b;color:#fff;padding:14px;font-family:monospace;font-size:12px;z-index:9999;white-space:pre-wrap;max-height:40vh;overflow:auto;';
+  box.textContent = 'REAL ERROR:\n' + (e.message || 'unknown') + '\nFile: ' + (e.filename||'') + ' Line: ' + (e.lineno||'') + '\n' + (e.error && e.error.stack ? e.error.stack : '');
+  document.body.appendChild(box);
+});
+</script>
+<script>
+try {
+
+function proposalSectionsHTML(data, accent){
+  if(data.docType !== 'proposal') return '';
+  const overview = data.overview ? `<p style="font-size:0.92rem;line-height:1.6;margin-bottom:26px;color:var(--ink);">${data.overview}</p>` : '';
+  const scope = (data.scopeItems && data.scopeItems.length) ? `
+    <div class="mono" style="margin-bottom:10px;">Scope of work</div>
+    <ul style="list-style:none;margin-bottom:26px;">
+      ${data.scopeItems.map(s => `<li style="display:flex;gap:10px;padding:7px 0;border-bottom:1px solid var(--line);font-size:0.9rem;"><span style="width:6px;height:6px;border-radius:50%;background:${accent};margin-top:7px;flex-shrink:0;"></span>${s}</li>`).join('')}
+    </ul>` : '';
+  const timeline = (data.timeline && data.timeline.length) ? `
+    <div class="mono" style="margin-bottom:10px;">Timeline</div>
+    <div style="margin-bottom:30px;">
+      ${data.timeline.map(t => `<div style="display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-bottom:1px solid var(--line);font-size:0.9rem;"><span>${t.phase}</span><span class="mono" style="color:var(--ink-soft);">${t.duration}</span></div>`).join('')}
+    </div>` : '';
+  const investmentLabel = `<div class="mono" style="margin-bottom:10px;">Investment</div>`;
+  return overview + scope + timeline + investmentLabel;
+}
+
+function termsHTML(data){
+  const rows = [];
+  if(data.revisions) rows.push(['Revisions', data.revisions]);
+  if(data.usageRights) rows.push(['Usage rights', data.usageRights]);
+  if(data.delivery) rows.push(['Delivery', data.delivery]);
+  if(!rows.length) return '';
+  return `<div style="margin-top:14px;">${rows.map(([label,val]) =>
+    `<div style="display:flex;gap:14px;padding:5px 0;font-size:0.82rem;color:var(--ink-soft);"><span class="mono" style="min-width:90px;flex-shrink:0;">${label}</span><span>${val}</span></div>`
+  ).join('')}</div>`;
+}
+
 function renderQuoteHTML(data){
   const currencySymbols = { USD:'$', EUR:'€', GBP:'£', KRW:'₩', CAD:'C$', AUD:'A$' };
   const sym = currencySymbols[data.currency] || '$';
@@ -167,8 +258,15 @@ function renderQuoteHTML(data){
     const lineTotal=(item.qty||1)*(item.price||0); total+=lineTotal;
     return `<tr><td>${item.desc}</td><td class="num">${item.qty}</td><td class="num">${fmt(item.price)}</td><td class="num">${fmt(lineTotal)}</td></tr>`;
   }).join('');
+  const subtotal = total;
+  const taxAmount = (data.docType === 'invoice' && data.taxEnabled) ? subtotal * ((data.taxRate||0)/100) : 0;
+  const grandTotal = subtotal + taxAmount;
+  const taxRowsHTML = (data.docType === 'invoice' && data.taxEnabled) ? `
+    <div style="display:flex;justify-content:space-between;font-size:0.85rem;color:var(--ink-soft);padding:3px 0;"><span>Subtotal</span><span>${fmt(subtotal)}</span></div>
+    <div style="display:flex;justify-content:space-between;font-size:0.85rem;color:var(--ink-soft);padding:3px 0;"><span>${data.taxLabel||'Tax'} (${data.taxRate||0}%)</span><span>${fmt(taxAmount)}</span></div>
+  ` : '';
   const today = new Date();
-  const dateStr = today.toLocaleDateString(undefined,{year:'numeric',month:'short',day:'numeric'});
+  const dateStr = today.toLocaleDateString('en-US',{year:'numeric',month:'short',day:'numeric'});
   const logoImg = data.logo ? `<img src="${data.logo}" style="width:36px;height:36px;border-radius:6px;object-fit:cover;">` : `<span style="width:36px;height:36px;border-radius:6px;background:${accent};display:inline-block;"></span>`;
 
   if(data.style === 'bold'){
@@ -184,13 +282,16 @@ function renderQuoteHTML(data){
         <div class="mono" style="margin-bottom:4px;">Prepared for</div>
         <div class="client-name">${data.clientName||'Client'}</div>
         <div style="color:var(--ink-soft);font-size:0.9rem;margin-bottom:22px;">${data.projectTitle||''}</div>
+        ${proposalSectionsHTML(data, accent)}
         <table class="bold-table"><thead><tr><th>Description</th><th class="num">Qty</th><th class="num">Price</th><th class="num">Total</th></tr></thead><tbody>${rows}</tbody></table>
       </div>
+      <div style="padding:0 32px;">${taxRowsHTML}</div>
       <div class="bold-total-band">
-        <div class="bold-total-label">Total due from ${data.clientName||'client'}</div>
-        <div class="bold-total-amount">${fmt(total)}</div>
+        <div class="bold-total-label">${data.docType==='invoice' ? 'Amount due' : 'Total due'} from ${data.clientName||'client'}${data.docType==='invoice' && data.dueTerms ? ' · '+data.dueTerms : ''}</div>
+        <div class="bold-total-amount">${fmt(grandTotal)}</div>
       </div>
-      ${data.notes ? `<div style="padding:16px 32px;font-size:0.85rem;color:var(--ink-soft);border-top:1px solid var(--line);">${data.notes}</div>` : ''}
+      ${data.docType==='invoice' && data.paymentDetails ? `<div style="padding:16px 32px 0;font-size:0.82rem;color:var(--ink-soft);"><span class="mono">Payment</span><br>${data.paymentDetails}</div>` : ''}
+      ${(data.notes || data.revisions || data.usageRights || data.delivery) ? `<div style="padding:16px 32px;font-size:0.85rem;color:var(--ink-soft);border-top:1px solid var(--line);">${data.notes||''}${termsHTML(data)}</div>` : ''}
     </div>`;
   }
   return `
@@ -205,12 +306,75 @@ function renderQuoteHTML(data){
     </div>
     <div class="mono" style="margin-bottom:2px;">Prepared for</div>
     <div class="client-name" style="margin-bottom:36px;">${data.clientName||'Client'}<div style="font-weight:400;font-size:0.85rem;color:var(--ink-soft);font-family:'Inter';margin-top:2px;">${data.projectTitle||''}</div></div>
+    ${proposalSectionsHTML(data, accent)}
     <table class="min-table"><thead><tr><th>Description</th><th class="num">Qty</th><th class="num">Price</th><th class="num">Total</th></tr></thead><tbody>${rows}</tbody></table>
-    <div style="display:flex;justify-content:flex-end;margin:26px 0 10px;"><div style="text-align:right;"><div class="mono">Total</div><div class="min-total" style="color:${accent};">${fmt(total)}</div></div></div>
-    ${data.notes ? `<div style="font-size:0.82rem;color:var(--ink-soft);border-top:1px solid var(--line);padding-top:12px;margin-top:6px;">${data.notes}</div>` : ''}
+    ${taxRowsHTML ? `<div style="margin-top:14px;">${taxRowsHTML}</div>` : ''}
+    <div style="display:flex;justify-content:flex-end;margin:26px 0 10px;"><div style="text-align:right;"><div class="mono">${data.docType==='invoice' ? 'Amount due'+(data.dueTerms?' · '+data.dueTerms:'') : 'Total'}</div><div class="min-total" style="color:${accent};">${fmt(grandTotal)}</div></div></div>
+    ${data.docType==='invoice' && data.paymentDetails ? `<div style="font-size:0.82rem;color:var(--ink-soft);margin-bottom:10px;"><span class="mono">Payment</span><br>${data.paymentDetails}</div>` : ''}
+    ${(data.notes || data.revisions || data.usageRights || data.delivery) ? `<div style="font-size:0.82rem;color:var(--ink-soft);border-top:1px solid var(--line);padding-top:12px;margin-top:6px;">${data.notes||''}${termsHTML(data)}</div>` : ''}
     </div>
   </div>`;
 }
+
+let scopeCount = 0;
+function addScope(text = ''){
+  scopeCount++;
+  const id = 'scope_' + scopeCount;
+  const row = document.createElement('div');
+  row.className = 'item-row';
+  row.id = id;
+  row.style.gridTemplateColumns = '1fr 30px';
+  row.innerHTML = `
+    <input type="text" class="scope-desc" placeholder="e.g. Full brand identity system" value="${text}">
+    <button class="remove-btn" type="button" onclick="document.getElementById('${id}').remove(); updatePreviews();">✕</button>
+  `;
+  document.getElementById('scopeList').appendChild(row);
+}
+addScope('Logo and brand mark');
+addScope('Color palette and typography system');
+document.getElementById('addScopeBtn').addEventListener('click', () => { addScope(); updatePreviews(); });
+document.getElementById('scopeList').addEventListener('input', updatePreviews);
+
+let timelineCount = 0;
+function addTimeline(phase = '', duration = ''){
+  timelineCount++;
+  const id = 'tl_' + timelineCount;
+  const row = document.createElement('div');
+  row.className = 'item-row';
+  row.id = id;
+  row.style.gridTemplateColumns = '1fr 110px 30px';
+  row.innerHTML = `
+    <input type="text" class="tl-phase" placeholder="e.g. Discovery & research" value="${phase}">
+    <input type="text" class="tl-duration" placeholder="Week 1" value="${duration}">
+    <button class="remove-btn" type="button" onclick="document.getElementById('${id}').remove(); updatePreviews();">✕</button>
+  `;
+  document.getElementById('timelineList').appendChild(row);
+}
+addTimeline('Discovery & research', 'Week 1');
+addTimeline('Design & revisions', 'Weeks 2–3');
+document.getElementById('addTimelineBtn').addEventListener('click', () => { addTimeline(); updatePreviews(); });
+document.getElementById('timelineList').addEventListener('input', updatePreviews);
+
+let docType = 'quote';
+document.getElementById('doctypeRow').addEventListener('click', (e) => {
+  const btn = e.target.closest('.doctype-btn');
+  if(btn){
+    docType = btn.dataset.doctype;
+    document.querySelectorAll('.doctype-btn').forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+    document.getElementById('proposalCard').style.display = docType === 'proposal' ? 'block' : 'none';
+    document.getElementById('invoiceCard').style.display = docType === 'invoice' ? 'block' : 'none';
+    updatePreviews();
+  }
+});
+
+document.getElementById('taxEnabled').addEventListener('change', (e) => {
+  document.getElementById('taxFields').style.display = e.target.checked ? 'block' : 'none';
+  updatePreviews();
+});
+['dueTerms','taxLabel','taxRate','paymentDetails'].forEach(id => {
+  document.getElementById(id).addEventListener('input', updatePreviews);
+});
 
 let itemCount = 0;
 function addItem(desc = '', qty = 1, price = ''){
@@ -240,24 +404,30 @@ function loadPrefs(){
     const saved = JSON.parse(localStorage.getItem(PREF_KEY) || '{}');
     if(saved.brandName){ document.getElementById('brandName').value = saved.brandName; }
     if(saved.contactInfo){ document.getElementById('contactInfo').value = saved.contactInfo; }
-    if(saved.color){ document.querySelectorAll('.swatch').forEach(s => s.classList.toggle('selected', s.dataset.color === saved.color)); }
-    if(saved.style){ document.querySelectorAll('.style-opt').forEach(s => s.classList.toggle('selected', s.dataset.style === saved.style)); }
+    if(saved.color && document.querySelector(`.swatch[data-color="${saved.color}"]`)){
+      document.querySelectorAll('.swatch').forEach(s => s.classList.toggle('selected', s.dataset.color === saved.color));
+    }
+    if(saved.style && document.querySelector(`.style-opt[data-style="${saved.style}"]`)){
+      document.querySelectorAll('.style-opt').forEach(s => s.classList.toggle('selected', s.dataset.style === saved.style));
+    }
     if(saved.logo){ logoDataUrl = saved.logo; document.getElementById('logoUpload').textContent = '✓ Saved logo loaded'; }
     if(saved.brandName || saved.color) document.getElementById('rememberedNote').classList.add('show');
+    if(!document.querySelector('.swatch.selected')){ document.querySelector('.swatch').classList.add('selected'); }
+    if(!document.querySelector('.style-opt.selected')){ document.querySelector('.style-opt').classList.add('selected'); }
   }catch(e){}
 }
 function savePrefs(){
   localStorage.setItem(PREF_KEY, JSON.stringify({
     brandName: document.getElementById('brandName').value,
     contactInfo: document.getElementById('contactInfo').value,
-    color: document.querySelector('.swatch.selected').dataset.color,
-    style: document.querySelector('.style-opt.selected').dataset.style,
+    color: (document.querySelector('.swatch.selected')||document.querySelector('.swatch')).dataset.color,
+    style: (document.querySelector('.style-opt.selected')||document.querySelector('.style-opt')).dataset.style,
     logo: logoDataUrl
   }));
 }
 
 function sampleItems(){
-  const rows = Array.from(document.querySelectorAll('.item-row'));
+  const rows = Array.from(document.querySelectorAll('#itemsList .item-row'));
   if(rows.length){
     return rows.map(row => ({desc: row.querySelector('.item-desc').value || 'Line item', qty: Number(row.querySelector('.item-qty').value)||1, price: Number(row.querySelector('.item-price').value)||0}));
   }
@@ -265,13 +435,28 @@ function sampleItems(){
 }
 function currentData(style){
   return {
+    docType: docType,
     clientName: document.getElementById('clientName').value || 'Studio Marlow',
     projectTitle: document.getElementById('projectTitle').value || 'Brand identity',
     brandName: document.getElementById('brandName').value || 'Your studio',
     contactInfo: document.getElementById('contactInfo').value,
     notes: document.getElementById('notes').value,
+    revisions: document.getElementById('revisions').value,
+    usageRights: document.getElementById('usageRights').value,
+    delivery: document.getElementById('delivery').value,
+    dueTerms: document.getElementById('dueTerms').value,
+    taxEnabled: document.getElementById('taxEnabled').checked,
+    taxLabel: document.getElementById('taxLabel').value || 'Tax',
+    taxRate: Number(document.getElementById('taxRate').value) || 0,
+    paymentDetails: document.getElementById('paymentDetails').value,
+    overview: document.getElementById('overview').value,
+    scopeItems: Array.from(document.querySelectorAll('.scope-desc')).map(i => i.value).filter(Boolean),
+    timeline: Array.from(document.querySelectorAll('#timelineList .item-row')).map(row => ({
+      phase: row.querySelector('.tl-phase').value,
+      duration: row.querySelector('.tl-duration').value
+    })).filter(t => t.phase),
     currency: document.getElementById('currency').value,
-    color: document.querySelector('.swatch.selected').dataset.color,
+    color: (document.querySelector('.swatch.selected')||document.querySelector('.swatch')).dataset.color,
     style: style,
     logo: logoDataUrl,
     items: sampleItems()
@@ -315,7 +500,7 @@ document.getElementById('styleOptions').addEventListener('click', (e) => {
     savePrefs();
   }
 });
-['brandName','contactInfo','notes','clientName','projectTitle','currency'].forEach(id => {
+['brandName','contactInfo','notes','revisions','usageRights','delivery','clientName','projectTitle','currency'].forEach(id => {
   document.getElementById(id).addEventListener('input', () => { updatePreviews(); savePrefs(); });
 });
 
@@ -324,7 +509,7 @@ document.getElementById('generateBtn').addEventListener('click', async () => {
   btn.textContent = 'Polishing wording…';
   btn.disabled = true;
 
-  const items = Array.from(document.querySelectorAll('.item-row')).map(row => ({
+  const items = Array.from(document.querySelectorAll('#itemsList .item-row')).map(row => ({
     desc: row.querySelector('.item-desc').value,
     qty: Number(row.querySelector('.item-qty').value),
     price: Number(row.querySelector('.item-price').value)
@@ -338,14 +523,29 @@ document.getElementById('generateBtn').addEventListener('click', async () => {
 
   savePrefs();
   const data = {
+    docType: docType,
     clientName: document.getElementById('clientName').value,
     projectTitle: document.getElementById('projectTitle').value,
     brandName: document.getElementById('brandName').value,
     contactInfo: document.getElementById('contactInfo').value,
     notes: document.getElementById('notes').value,
+    revisions: document.getElementById('revisions').value,
+    usageRights: document.getElementById('usageRights').value,
+    delivery: document.getElementById('delivery').value,
+    dueTerms: document.getElementById('dueTerms').value,
+    taxEnabled: document.getElementById('taxEnabled').checked,
+    taxLabel: document.getElementById('taxLabel').value || 'Tax',
+    taxRate: Number(document.getElementById('taxRate').value) || 0,
+    paymentDetails: document.getElementById('paymentDetails').value,
+    overview: document.getElementById('overview').value,
+    scopeItems: Array.from(document.querySelectorAll('.scope-desc')).map(i => i.value).filter(Boolean),
+    timeline: Array.from(document.querySelectorAll('#timelineList .item-row')).map(row => ({
+      phase: row.querySelector('.tl-phase').value,
+      duration: row.querySelector('.tl-duration').value
+    })).filter(t => t.phase),
     currency: document.getElementById('currency').value,
-    color: document.querySelector('.swatch.selected').dataset.color,
-    style: document.querySelector('.style-opt.selected').dataset.style,
+    color: (document.querySelector('.swatch.selected')||document.querySelector('.swatch')).dataset.color,
+    style: (document.querySelector('.style-opt.selected')||document.querySelector('.style-opt')).dataset.style,
     logo: logoDataUrl,
     items
   };
@@ -355,6 +555,13 @@ document.getElementById('generateBtn').addEventListener('click', async () => {
 
 loadPrefs();
 updatePreviews();
+
+} catch(err) {
+  var box = document.createElement("div");
+  box.style.cssText = "position:fixed;bottom:0;left:0;right:0;background:#c0392b;color:#fff;padding:14px;font-family:monospace;font-size:11px;z-index:9999;white-space:pre-wrap;max-height:50vh;overflow:auto;";
+  box.textContent = "CAUGHT ERROR:\n" + err.message + "\n\n" + (err.stack || "no stack");
+  document.body.appendChild(box);
+}
 </script>
 </body>
 </html>
