@@ -58,6 +58,7 @@
   .jogak-mark span:nth-child(4){background:var(--accent-a,var(--jade));}
   .doc table{width:100%;border-collapse:collapse;}
   .doc td{padding:12px 0;font-size:0.92rem;}
+  .doc td.num,.doc th.num{padding-left:16px;}
   .doc th{text-align:left;font-size:0.66rem;text-transform:uppercase;letter-spacing:0.07em;color:var(--ink-soft);font-weight:600;padding-bottom:8px;}
   .doc .num{text-align:right;}
   .client-name{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:1.15rem;overflow-wrap:break-word;word-break:break-word;}
@@ -364,6 +365,8 @@ document.getElementById('doctypeRow').addEventListener('click', (e) => {
     btn.classList.add('selected');
     document.getElementById('proposalCard').style.display = docType === 'proposal' ? 'block' : 'none';
     document.getElementById('invoiceCard').style.display = docType === 'invoice' ? 'block' : 'none';
+    const btnLabel = docType === 'invoice' ? 'Generate invoice →' : docType === 'proposal' ? 'Generate proposal →' : 'Generate quote →';
+    document.getElementById('generateBtn').textContent = btnLabel;
     updatePreviews();
   }
 });

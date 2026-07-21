@@ -157,6 +157,7 @@ styleTag.textContent = `
   .jogak-mark span:nth-child(4){background:var(--accent-a,var(--jade,#2E6B5E));}
   .doc table{width:100%;border-collapse:collapse;}
   .doc td{padding:12px 0;font-size:0.92rem;}
+  .doc td.num,.doc th.num{padding-left:16px;}
   .doc th{text-align:left;font-size:0.66rem;text-transform:uppercase;letter-spacing:0.07em;color:var(--ink-soft);font-weight:600;padding-bottom:8px;}
   .doc .num{text-align:right;}
   .client-name{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:1.15rem;overflow-wrap:break-word;word-break:break-word;}
@@ -187,6 +188,7 @@ let data = {};
 try { data = JSON.parse(decodeURIComponent(escape(atob(params.get('data')||'')))); }
 catch(e){ data = { clientName:'Sample Client', projectTitle:'Sample project', currency:'USD', color:'#2E6B5E', style:'minimal',
   items:[{desc:'Homepage design',qty:1,price:800},{desc:'Two rounds of revisions',qty:1,price:150}] }; }
+data._num = Math.floor(1000+Math.random()*9000);
 
 const holder = document.getElementById('docHolder');
 
@@ -220,7 +222,7 @@ function renderApprove(){
         <input id="approveName" type="text" placeholder="Type your name to approve" style="flex:1;min-width:180px;padding:11px 13px;border:1px solid var(--line);border-radius:4px;font-family:'Inter';font-size:0.92rem;">
         <button class="btn btn-print" id="approveBtn" style="margin:0;">Approve</button>
       </div>
-      <p style="font-size:0.78rem;color:var(--ink-soft);margin-top:8px;">This confirms you accept the quote above. ${freelancerEmail ? 'A note will be sent to '+freelancerEmail[0]+'.' : ''}</p>
+      <p style="font-size:0.78rem;color:var(--ink-soft);margin-top:8px;">This confirms you accept the quote above. ${freelancerEmail ? 'Your email app will open a note to '+freelancerEmail[0]+'.' : ''}</p>
     </div>`;
   document.getElementById('approveBtn').addEventListener('click', () => {
     const name = document.getElementById('approveName').value.trim();
