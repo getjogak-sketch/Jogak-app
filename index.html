@@ -252,7 +252,17 @@ function termsHTML(data){
 function renderQuoteHTML(data){
   const currencySymbols = { USD:'$', EUR:'€', GBP:'£', KRW:'₩', CAD:'C$', AUD:'A$' };
   const sym = currencySymbols[data.currency] || '$';
-  const fmt = (n) => sym + Number(n).toLocaleString(undefined,{minimumFractionDigits:data.currency==='KRW'?0:2,maximumFractionDigits:data.currency==='KRW'?0:2});
+  const currencyLocales = { USD:'en-US', CAD:'en-CA', AUD:'en-AU', GBP:'en-GB', EUR:'de-DE', KRW:'ko-KR' };
+  const numLocale = currencyLocales[data.currency] || 'en-US';
+  const fmt = (n) => sym + Number(n).toLocaleString(numLocale,{minimumFractionDigits:data.currency==='KRW'?0:2,maximumFractionDigits:data.currency==='KRW'?0:2});
+  function dueDateLabel(terms){
+    if(!terms) return '';
+    const days = {'Net 7':7,'Net 14':14,'Net 30':30,'Due upon receipt':0}[terms];
+    if(days === undefined) return terms;
+    const d = new Date(); d.setDate(d.getDate()+days);
+    const dateStr2 = d.toLocaleDateString('en-US',{year:'numeric',month:'short',day:'numeric'});
+    return days===0 ? `Due upon receipt (${dateStr2})` : `Due by ${dateStr2} (${terms})`;
+  }
   const accent = data.color || '#2E6B5E';
   let total = 0;
   const rows = (data.items||[]).map(item=>{
@@ -288,7 +298,7 @@ function renderQuoteHTML(data){
       </div>
       <div style="padding:0 32px;">${taxRowsHTML}</div>
       <div class="bold-total-band">
-        <div class="bold-total-label">${data.docType==='invoice' ? 'Amount due' : 'Total due'} from ${data.clientName||'client'}${data.docType==='invoice' && data.dueTerms ? ' · '+data.dueTerms : ''}</div>
+        <div class="bold-total-label">${data.docType==='invoice' ? 'Amount due' : 'Total due'} from ${data.clientName||'client'}${data.docType==='invoice' && data.dueTerms ? ' · '+dueDateLabel(data.dueTerms) : ''}</div>
         <div class="bold-total-amount">${fmt(grandTotal)}</div>
       </div>
       ${data.docType==='invoice' && data.paymentDetails ? `<div style="padding:16px 32px 0;font-size:0.82rem;color:var(--ink-soft);"><span class="mono">Payment</span><br>${data.paymentDetails}</div>` : ''}
@@ -310,7 +320,7 @@ function renderQuoteHTML(data){
     ${proposalSectionsHTML(data, accent)}
     <table class="min-table"><thead><tr><th>Description</th><th class="num">Qty</th><th class="num">Price</th><th class="num">Total</th></tr></thead><tbody>${rows}</tbody></table>
     ${taxRowsHTML ? `<div style="margin-top:14px;">${taxRowsHTML}</div>` : ''}
-    <div style="display:flex;justify-content:flex-end;margin:26px 0 10px;"><div style="text-align:right;"><div class="mono">${data.docType==='invoice' ? 'Amount due'+(data.dueTerms?' · '+data.dueTerms:'') : 'Total'}</div><div class="min-total" style="color:${accent};">${fmt(grandTotal)}</div></div></div>
+    <div style="display:flex;justify-content:flex-end;margin:26px 0 10px;"><div style="text-align:right;"><div class="mono">${data.docType==='invoice' ? 'Amount due'+(data.dueTerms?' · '+dueDateLabel(data.dueTerms):'') : 'Total'}</div><div class="min-total" style="color:${accent};">${fmt(grandTotal)}</div></div></div>
     ${data.docType==='invoice' && data.paymentDetails ? `<div style="font-size:0.82rem;color:var(--ink-soft);margin-bottom:10px;"><span class="mono">Payment</span><br>${data.paymentDetails}</div>` : ''}
     ${(data.notes || data.revisions || data.usageRights || data.delivery) ? `<div style="font-size:0.82rem;color:var(--ink-soft);border-top:1px solid var(--line);padding-top:12px;margin-top:6px;">${data.notes||''}${termsHTML(data)}</div>` : ''}
     </div>
