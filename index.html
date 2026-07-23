@@ -35,10 +35,13 @@
   .item-row label{margin-top:0;}
   .remove-btn{background:none;border:none;color:var(--ink-soft);font-size:1.1rem;cursor:pointer;padding:8px;}
   .add-btn{margin-top:6px;background:none;border:1px dashed var(--line);color:var(--ink-soft);padding:10px;border-radius:var(--radius);width:100%;cursor:pointer;font-family:'Inter';font-size:0.85rem;}
-  .style-options{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px;}
+  .style-options{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:14px;}
   .style-opt{border:2px solid var(--line);border-radius:6px;padding:10px;text-align:center;cursor:pointer;font-size:0.82rem;min-width:0;}
   .style-opt.selected{border-color:var(--jade);background:var(--paper-deep);}
-  .style-preview{margin-bottom:10px;border-radius:4px;overflow:hidden;border:1px solid var(--line);background:#EDE9DF;height:104px;position:relative;min-width:0;}
+  .style-preview{margin-bottom:10px;border-radius:4px;overflow:hidden;border:1px solid var(--line);background:#fff;height:104px;position:relative;min-width:0;padding:12px;box-sizing:border-box;}
+  .pv-line{height:6px;border-radius:2px;background:currentColor;opacity:0.15;margin-bottom:6px;}
+  .pv-line.short{width:55%;}
+  .pv-line.full{width:100%;}
   .style-preview-inner{transform-origin:top left;width:680px;}
   .color-row{display:flex;gap:10px;margin-top:14px;}
   .swatch{width:34px;height:34px;border-radius:50%;border:2px solid transparent;cursor:pointer;}
@@ -50,7 +53,7 @@
   .remembered{font-size:0.72rem;color:var(--jade);margin-top:6px;display:none;}
   .remembered.show{display:block;}
 
-  .doc{font-family:'Inter',sans-serif;color:var(--ink);background:var(--paper);border-radius:6px;overflow:hidden;}
+  .doc{font-family:'Inter',sans-serif;color:var(--ink);background:var(--paper);border-radius:6px;overflow:hidden;width:100%;box-sizing:border-box;}
   .jogak-mark{display:inline-grid;grid-template-columns:1fr 1fr;width:14px;height:14px;border-radius:3px;overflow:hidden;flex-shrink:0;}
   .jogak-mark span:nth-child(1){background:var(--accent-a,var(--jade));}
   .jogak-mark span:nth-child(2){background:var(--accent-b,var(--ochre));}
@@ -93,15 +96,19 @@
   <h1 style="font-size:1.5rem;margin-bottom:6px;">Create a document</h1>
   <p style="color:var(--ink-soft);font-size:0.9rem;margin-bottom:18px;">Fill this in once — get a branded document you can send or save as a PDF.</p>
 
-  <div class="doctype-row" id="doctypeRow" style="display:flex;gap:8px;margin-bottom:24px;">
+  <div class="doctype-row" id="doctypeRow" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:24px;">
     <button type="button" class="doctype-btn selected" data-doctype="quote">Quote<br><span class="hint">Price, ready to send</span></button>
     <button type="button" class="doctype-btn" data-doctype="proposal">Proposal<br><span class="hint">Scope + timeline + price</span></button>
     <button type="button" class="doctype-btn" data-doctype="invoice">Invoice<br><span class="hint">Formal, payment due</span></button>
+    <button type="button" class="doctype-btn" data-doctype="contract">Contract<br><span class="hint">Scope, terms, signatures</span></button>
+    <button type="button" class="doctype-btn" data-doctype="nda">NDA<br><span class="hint">Confidentiality agreement</span></button>
   </div>
 
   <div class="card" id="invoiceCard" style="display:none;">
     <h2>Invoice details</h2>
-    <label for="dueTerms">Payment due</label>
+    <label for="clientAddress">Client address <span style="color:var(--ink-soft);font-weight:400;">(optional, for tax records)</span></label>
+    <input type="text" id="clientAddress" placeholder="e.g. 123 Market St, Austin, TX 78701">
+    <label for="dueTerms" style="margin-top:14px;">Payment due</label>
     <select id="dueTerms">
       <option value="Due upon receipt">Due upon receipt</option>
       <option value="Net 7">Net 7</option>
@@ -120,6 +127,42 @@
     </div>
     <label style="margin-top:14px;" for="paymentDetails">Payment details</label>
     <input type="text" id="paymentDetails" placeholder="e.g. Bank transfer — IBAN XX00..., or PayPal: you@studio.com">
+    <label style="margin-top:14px;">EU clients <span style="color:var(--ink-soft);font-weight:400;">(optional standard clauses)</span></label>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px;">
+      <button type="button" class="add-btn" id="insertReverseCharge" style="width:auto;">+ VAT reverse charge clause</button>
+      <button type="button" class="add-btn" id="insertLatePayment" style="width:auto;">+ Late payment notice</button>
+    </div>
+  </div>
+
+  <div class="card" id="contractCard" style="display:none;">
+    <h2>Contract details</h2>
+    <label for="contractScope">Scope of services</label>
+    <input type="text" id="contractScope" placeholder="e.g. Freelancer will design and deliver a brand identity system, including logo, color palette, and typography guide.">
+    <label style="margin-top:14px;display:flex;align-items:center;gap:8px;">
+      <input type="checkbox" id="ipOwnership" style="width:auto;" checked>
+      <span>Client owns final deliverables upon full payment</span>
+    </label>
+    <label style="margin-top:10px;display:flex;align-items:center;gap:8px;">
+      <input type="checkbox" id="confidentiality" style="width:auto;">
+      <span>Include confidentiality clause</span>
+    </label>
+    <div class="row2" style="margin-top:14px;">
+      <div><label for="terminationNotice">Termination notice</label><input type="text" id="terminationNotice" placeholder="e.g. 14 days"></div>
+      <div><label for="governingLaw">Governing law</label><input type="text" id="governingLaw" placeholder="e.g. State of California, USA"></div>
+    </div>
+  </div>
+
+  <div class="card" id="ndaCard" style="display:none;">
+    <h2>NDA details</h2>
+    <label for="ndaType">Type</label>
+    <select id="ndaType">
+      <option value="Mutual">Mutual — both parties share confidential info</option>
+      <option value="One-way">One-way — only I am disclosing confidential info</option>
+    </select>
+    <label for="ndaPurpose" style="margin-top:14px;">Purpose / context</label>
+    <input type="text" id="ndaPurpose" placeholder="e.g. Discussions related to a potential design collaboration">
+    <label for="ndaTerm" style="margin-top:14px;">Confidentiality term</label>
+    <input type="text" id="ndaTerm" placeholder="e.g. 2 years from the effective date">
   </div>
 
   <div class="card" id="proposalCard" style="display:none;">
@@ -138,6 +181,8 @@
     <h2>Client &amp; project</h2>
     <label for="clientName">Client name</label>
     <input type="text" id="clientName" placeholder="e.g. Studio Marlow">
+    <label for="clientEmail" style="margin-top:14px;">Client email <span style="color:var(--ink-soft);font-weight:400;">(optional, to send the link directly)</span></label>
+    <input type="email" id="clientEmail" placeholder="e.g. hello@studiomarlow.com">
     <label for="projectTitle">Project title</label>
     <input type="text" id="projectTitle" placeholder="e.g. Brand identity design">
   </div>
@@ -182,12 +227,16 @@
     <label>Quote style — live preview</label>
     <div class="style-options" id="styleOptions">
       <div class="style-opt selected" data-style="minimal">
-        <div class="style-preview"><div class="style-preview-inner" id="previewMinimal"></div></div>
+        <div class="style-preview" id="previewMinimal"></div>
         Minimal
       </div>
       <div class="style-opt" data-style="bold">
-        <div class="style-preview"><div class="style-preview-inner" id="previewBold"></div></div>
+        <div class="style-preview" id="previewBold"></div>
         Bold
+      </div>
+      <div class="style-opt" data-style="numeric">
+        <div class="style-preview" id="previewNumeric"></div>
+        Numeric
       </div>
     </div>
     <p class="remembered" id="rememberedNote">✓ Using your saved brand details from last time — change anything above to update.</p>
@@ -238,6 +287,53 @@ function proposalSectionsHTML(data, accent){
   return overview + scope + timeline + investmentLabel;
 }
 
+function contractSectionsHTML(data, accent){
+  if(data.docType !== 'contract') return '';
+  const scope = data.contractScope ? `<div class="mono" style="margin-bottom:10px;">Scope of services</div><p style="font-size:0.92rem;line-height:1.6;margin-bottom:24px;color:var(--ink);">${data.contractScope}</p>` : '';
+  const clauses = [];
+  clauses.push(['Independent contractor', `${data.brandName||'The Freelancer'} is engaged as an independent contractor, not an employee. Each party is responsible for their own taxes, insurance, and benefits.`]);
+  if(data.ipOwnership){ clauses.push(['Intellectual property', 'Upon full payment, all final deliverables become the exclusive property of the Client. The Freelancer retains the right to display the work in a portfolio unless otherwise agreed.']); }
+  if(data.confidentiality){ clauses.push(['Confidentiality', 'Both parties agree to keep confidential any non-public information shared during this engagement, and not to disclose it to third parties without written consent.']); }
+  if(data.terminationNotice){ clauses.push(['Termination', `Either party may terminate this agreement with ${data.terminationNotice} written notice. Work completed and expenses incurred up to the termination date remain payable.`]); }
+  if(data.governingLaw){ clauses.push(['Governing law', `This agreement is governed by the laws of ${data.governingLaw}.`]); }
+  const clausesHTML = clauses.length ? clauses.map(([label,text]) => `<div style="margin-bottom:18px;"><div class="mono" style="margin-bottom:6px;font-size:0.72rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--ink-soft);">${label}</div><p style="font-size:0.86rem;line-height:1.6;color:var(--ink);opacity:0.85;">${text}</p></div>`).join('') : '';
+  const feeLabel = `<div class="mono" style="margin-bottom:10px;">Project fee</div>`;
+  return scope + clausesHTML + feeLabel;
+}
+
+function contractFooterHTML(data){
+  if(!['contract','nda'].includes(data.docType)) return '';
+  return `
+    <div style="margin-top:30px;padding-top:22px;border-top:1px solid var(--line);">
+      <div style="display:flex;gap:32px;flex-wrap:wrap;margin-bottom:18px;">
+        <div style="flex:1;min-width:160px;">
+          <div style="border-bottom:1px solid var(--ink);height:32px;"></div>
+          <div style="font-size:0.76rem;color:var(--ink-soft);margin-top:6px;">${data.brandName||'Freelancer'} — Date</div>
+        </div>
+        <div style="flex:1;min-width:160px;">
+          <div style="border-bottom:1px solid var(--ink);height:32px;"></div>
+          <div style="font-size:0.76rem;color:var(--ink-soft);margin-top:6px;">${data.clientName||'Client'} — Date</div>
+        </div>
+      </div>
+      <p style="font-size:0.7rem;line-height:1.5;color:var(--ink-soft);opacity:0.8;">This document is a template for general informational purposes and does not constitute legal advice. Consult a qualified attorney before use.</p>
+    </div>`;
+}
+
+function ndaSectionsHTML(data, accent){
+  if(data.docType !== 'nda') return '';
+  const partyLine = data.ndaType === 'One-way'
+    ? `${data.brandName||'The Freelancer'} (the "Disclosing Party") may share confidential information with ${data.clientName||'the Receiving Party'} (the "Receiving Party") for the purpose described below.`
+    : `${data.brandName||'The Freelancer'} and ${data.clientName||'the other party'} (together, the "Parties") may each share confidential information with the other for the purpose described below.`;
+  const purpose = data.ndaPurpose ? `<p style="font-size:0.92rem;line-height:1.6;margin-bottom:22px;color:var(--ink);">${partyLine} <strong>Purpose:</strong> ${data.ndaPurpose}</p>` : `<p style="font-size:0.92rem;line-height:1.6;margin-bottom:22px;color:var(--ink);">${partyLine}</p>`;
+  const clauses = [
+    ['Confidentiality obligation', 'The Receiving Party agrees to use confidential information solely for the stated purpose, to protect it with reasonable care, and not to disclose it to third parties without prior written consent.'],
+    ['Exclusions', 'This agreement does not apply to information that is already public, was already known to the Receiving Party, or is independently developed without reference to the confidential information.'],
+  ];
+  if(data.ndaTerm){ clauses.push(['Term', `This agreement remains in effect for ${data.ndaTerm}, after which the confidentiality obligations described above will no longer apply.`]); }
+  const clausesHTML = clauses.map(([label,text]) => `<div style="margin-bottom:18px;"><div class="mono" style="margin-bottom:6px;font-size:0.72rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--ink-soft);">${label}</div><p style="font-size:0.86rem;line-height:1.6;color:var(--ink);opacity:0.85;">${text}</p></div>`).join('');
+  return purpose + clausesHTML;
+}
+
 function termsHTML(data){
   const rows = [];
   if(data.revisions) rows.push(['Revisions', data.revisions]);
@@ -280,6 +376,35 @@ function renderQuoteHTML(data){
   const dateStr = today.toLocaleDateString('en-US',{year:'numeric',month:'short',day:'numeric'});
   const logoImg = data.logo ? `<img src="${data.logo}" style="width:36px;height:36px;border-radius:6px;object-fit:cover;">` : `<span style="width:36px;height:36px;border-radius:6px;background:${accent};display:inline-block;"></span>`;
 
+  if(data.style === 'numeric'){
+    const numRows = (data.items||[]).map(item=>{
+      const lineTotal=(item.qty||1)*(item.price||0);
+      return `<div style="display:flex;justify-content:space-between;gap:16px;padding:15px 0;border-bottom:1px solid rgba(255,255,255,0.12);font-size:0.95rem;"><span style="min-width:0;">${item.desc}</span><span class="mono" style="flex-shrink:0;">${fmt(lineTotal)}</span></div>`;
+    }).join('');
+    return `
+    <div class="doc doc-numeric" style="--accent:${accent};background:#221F1B;color:#FAF7F1;--ink:#FAF7F1;--ink-soft:#B8B2A5;--line:rgba(255,255,255,0.15);min-height:640px;">
+      <div style="height:5px;background:${accent};"></div>
+      <div style="padding:44px 40px 0;">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px;margin-bottom:34px;">
+          <div class="mono" style="font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;opacity:0.6;">${data.brandName||'Your studio'}${data.contactInfo? ' · '+data.contactInfo:''}</div>
+          <div class="mono" style="font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;opacity:0.6;text-align:right;">JG-1234 · ${dateStr}</div>
+        </div>
+        <div style="font-family:'Space Grotesk';font-weight:800;font-size:1.5rem;margin-bottom:2px;">${data.clientName||'Client'}</div>
+        ${data.docType==='invoice' && data.clientAddress ? `<div style="font-size:0.8rem;opacity:0.6;margin-bottom:4px;">${data.clientAddress}</div>` : ''}
+        <div style="opacity:0.65;font-size:0.92rem;margin-bottom:30px;">${data.projectTitle||''}</div>
+        ${proposalSectionsHTML(data, accent)}${contractSectionsHTML(data, accent)}${ndaSectionsHTML(data, accent)}
+        ${data.docType!=='nda' ? numRows : ''}
+        ${taxRowsHTML ? `<div style="padding-top:14px;opacity:0.8;">${taxRowsHTML}</div>` : ''}
+      </div>
+      ${data.docType!=='nda' ? `<div style="padding:34px 40px 10px;">
+        <div class="mono" style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.08em;opacity:0.55;">${data.docType==='invoice' ? 'Amount due'+(data.dueTerms?' · '+dueDateLabel(data.dueTerms):'') : (data.docType==='proposal' ? 'Investment' : data.docType==='contract' ? 'Project fee' : 'Total')}</div>
+        <div class="mono" style="font-family:'Space Grotesk';font-weight:800;font-size:3rem;line-height:1.1;margin-top:6px;color:${accent};">${fmt(grandTotal)}</div>
+      </div>` : '<div style="padding-top:10px;"></div>'}
+      ${data.docType==='invoice' && data.paymentDetails ? `<div style="padding:0 40px;font-size:0.82rem;opacity:0.7;margin-top:6px;"><span class="mono" style="opacity:0.6;">Payment</span><br>${data.paymentDetails}</div>` : ''}
+      ${(data.notes || data.revisions || data.usageRights || data.delivery) ? `<div style="padding:20px 40px 40px;font-size:0.85rem;opacity:0.7;border-top:1px solid rgba(255,255,255,0.15);margin-top:20px;">${data.notes||''}${termsHTML(data)}</div>` : `<div style="padding-bottom:34px;"></div>`}
+      ${contractFooterHTML(data)}
+    </div>`;
+  }
   if(data.style === 'bold'){
     return `
     <div class="doc doc-bold" style="--accent:${accent};">
@@ -292,16 +417,18 @@ function renderQuoteHTML(data){
       <div class="doc-body">
         <div class="mono" style="margin-bottom:4px;">Prepared for</div>
         <div class="client-name">${data.clientName||'Client'}</div>
+        ${data.docType==='invoice' && data.clientAddress ? `<div style="font-size:0.8rem;color:var(--ink-soft);margin-top:2px;">${data.clientAddress}</div>` : ''}
         <div style="color:var(--ink-soft);font-size:0.9rem;margin-bottom:22px;">${data.projectTitle||''}</div>
-        ${proposalSectionsHTML(data, accent)}
-        <table class="bold-table"><thead><tr><th>Description</th><th class="num">Qty</th><th class="num">Price</th><th class="num">Total</th></tr></thead><tbody>${rows}</tbody></table>
+        ${proposalSectionsHTML(data, accent)}${contractSectionsHTML(data, accent)}${ndaSectionsHTML(data, accent)}
+        ${data.docType!=='nda' ? `<table class="bold-table"><thead><tr><th>Description</th><th class="num">Qty</th><th class="num">Price</th><th class="num">Total</th></tr></thead><tbody>${rows}</tbody></table>` : ''}
       </div>
-      <div style="padding:0 32px;">${taxRowsHTML}</div>
+      ${data.docType!=='nda' ? `<div style="padding:0 32px;">${taxRowsHTML}</div>
       <div class="bold-total-band">
-        <div class="bold-total-label">${data.docType==='invoice' ? 'Amount due' : 'Total due'} from ${data.clientName||'client'}${data.docType==='invoice' && data.dueTerms ? ' · '+dueDateLabel(data.dueTerms) : ''}</div>
+        <div class="bold-total-label">${data.docType==='invoice' ? 'Amount due' : data.docType==='contract' ? 'Project fee' : 'Total due'} ${data.docType==='contract' ? '—' : 'from'} ${data.clientName||'client'}${data.docType==='invoice' && data.dueTerms ? ' · '+dueDateLabel(data.dueTerms) : ''}</div>
         <div class="bold-total-amount">${fmt(grandTotal)}</div>
-      </div>
+      </div>` : ''}
       ${data.docType==='invoice' && data.paymentDetails ? `<div style="padding:16px 32px 0;font-size:0.82rem;color:var(--ink-soft);"><span class="mono">Payment</span><br>${data.paymentDetails}</div>` : ''}
+      ${contractFooterHTML(data)}
       ${(data.notes || data.revisions || data.usageRights || data.delivery) ? `<div style="padding:16px 32px;font-size:0.85rem;color:var(--ink-soft);border-top:1px solid var(--line);">${data.notes||''}${termsHTML(data)}</div>` : ''}
     </div>`;
   }
@@ -316,11 +443,12 @@ function renderQuoteHTML(data){
       <div class="mono" style="text-align:right;">JG-1234<br>${dateStr}</div>
     </div>
     <div class="mono" style="margin-bottom:2px;">Prepared for</div>
-    <div class="client-name" style="margin-bottom:36px;">${data.clientName||'Client'}<div style="font-weight:400;font-size:0.85rem;color:var(--ink-soft);font-family:'Inter';margin-top:2px;">${data.projectTitle||''}</div></div>
-    ${proposalSectionsHTML(data, accent)}
-    <table class="min-table"><thead><tr><th>Description</th><th class="num">Qty</th><th class="num">Price</th><th class="num">Total</th></tr></thead><tbody>${rows}</tbody></table>
+    <div class="client-name" style="margin-bottom:36px;">${data.clientName||'Client'}<div style="font-weight:400;font-size:0.85rem;color:var(--ink-soft);font-family:'Inter';margin-top:2px;">${data.projectTitle||''}</div>${data.docType==='invoice' && data.clientAddress ? `<div style="font-weight:400;font-size:0.8rem;color:var(--ink-soft);font-family:'Inter';margin-top:2px;">${data.clientAddress}</div>` : ''}</div>
+    ${proposalSectionsHTML(data, accent)}${contractSectionsHTML(data, accent)}${ndaSectionsHTML(data, accent)}
+    ${data.docType!=='nda' ? `<table class="min-table"><thead><tr><th>Description</th><th class="num">Qty</th><th class="num">Price</th><th class="num">Total</th></tr></thead><tbody>${rows}</tbody></table>
     ${taxRowsHTML ? `<div style="margin-top:14px;">${taxRowsHTML}</div>` : ''}
-    <div style="display:flex;justify-content:flex-end;margin:26px 0 10px;"><div style="text-align:right;"><div class="mono">${data.docType==='invoice' ? 'Amount due'+(data.dueTerms?' · '+dueDateLabel(data.dueTerms):'') : 'Total'}</div><div class="min-total" style="color:${accent};">${fmt(grandTotal)}</div></div></div>
+    <div style="display:flex;justify-content:flex-end;margin:26px 0 10px;"><div style="text-align:right;"><div class="mono">${data.docType==='invoice' ? 'Amount due'+(data.dueTerms?' · '+dueDateLabel(data.dueTerms):'') : data.docType==='contract' ? 'Project fee' : 'Total'}</div><div class="min-total" style="color:${accent};">${fmt(grandTotal)}</div></div></div>` : ''}
+    ${contractFooterHTML(data)}
     ${data.docType==='invoice' && data.paymentDetails ? `<div style="font-size:0.82rem;color:var(--ink-soft);margin-bottom:10px;"><span class="mono">Payment</span><br>${data.paymentDetails}</div>` : ''}
     ${(data.notes || data.revisions || data.usageRights || data.delivery) ? `<div style="font-size:0.82rem;color:var(--ink-soft);border-top:1px solid var(--line);padding-top:12px;margin-top:6px;">${data.notes||''}${termsHTML(data)}</div>` : ''}
     </div>
@@ -375,7 +503,9 @@ document.getElementById('doctypeRow').addEventListener('click', (e) => {
     btn.classList.add('selected');
     document.getElementById('proposalCard').style.display = docType === 'proposal' ? 'block' : 'none';
     document.getElementById('invoiceCard').style.display = docType === 'invoice' ? 'block' : 'none';
-    const btnLabel = docType === 'invoice' ? 'Generate invoice →' : docType === 'proposal' ? 'Generate proposal →' : 'Generate quote →';
+    document.getElementById('contractCard').style.display = docType === 'contract' ? 'block' : 'none';
+    document.getElementById('ndaCard').style.display = docType === 'nda' ? 'block' : 'none';
+    const btnLabel = docType === 'invoice' ? 'Generate invoice →' : docType === 'proposal' ? 'Generate proposal →' : docType === 'contract' ? 'Generate contract →' : docType === 'nda' ? 'Generate NDA →' : 'Generate quote →';
     document.getElementById('generateBtn').textContent = btnLabel;
     updatePreviews();
   }
@@ -387,6 +517,18 @@ document.getElementById('taxEnabled').addEventListener('change', (e) => {
 });
 ['dueTerms','taxLabel','taxRate','paymentDetails'].forEach(id => {
   document.getElementById(id).addEventListener('input', updatePreviews);
+});
+
+function appendToNotes(text){
+  const notesEl = document.getElementById('notes');
+  notesEl.value = notesEl.value ? notesEl.value + ' ' + text : text;
+  notesEl.dispatchEvent(new Event('input'));
+}
+document.getElementById('insertReverseCharge').addEventListener('click', () => {
+  appendToNotes('VAT Reverse Charge — Article 196, Council Directive 2006/112/EC.');
+});
+document.getElementById('insertLatePayment').addEventListener('click', () => {
+  appendToNotes('Late payment may incur statutory interest and a fixed recovery cost per EU Directive 2011/7/EU.');
 });
 
 let itemCount = 0;
@@ -417,6 +559,16 @@ function loadPrefs(){
     const saved = JSON.parse(localStorage.getItem(PREF_KEY) || '{}');
     if(saved.brandName){ document.getElementById('brandName').value = saved.brandName; }
     if(saved.contactInfo){ document.getElementById('contactInfo').value = saved.contactInfo; }
+    if(saved.revisions){ document.getElementById('revisions').value = saved.revisions; }
+    if(saved.usageRights){ document.getElementById('usageRights').value = saved.usageRights; }
+    if(saved.delivery){ document.getElementById('delivery').value = saved.delivery; }
+    if(saved.dueTerms){ document.getElementById('dueTerms').value = saved.dueTerms; }
+    if(saved.terminationNotice){ document.getElementById('terminationNotice').value = saved.terminationNotice; }
+    if(saved.ndaTerm){ document.getElementById('ndaTerm').value = saved.ndaTerm; }
+    if(saved.governingLaw){ document.getElementById('governingLaw').value = saved.governingLaw; }
+    if(saved.confidentiality){ document.getElementById('confidentiality').checked = true; }
+    if(saved.ipOwnership === false){ document.getElementById('ipOwnership').checked = false; }
+    if(saved.currency && document.querySelector(`#currency option[value="${saved.currency}"]`)){ document.getElementById('currency').value = saved.currency; }
     if(saved.color && document.querySelector(`.swatch[data-color="${saved.color}"]`)){
       document.querySelectorAll('.swatch').forEach(s => s.classList.toggle('selected', s.dataset.color === saved.color));
     }
@@ -433,6 +585,16 @@ function savePrefs(){
   localStorage.setItem(PREF_KEY, JSON.stringify({
     brandName: document.getElementById('brandName').value,
     contactInfo: document.getElementById('contactInfo').value,
+    revisions: document.getElementById('revisions').value,
+    usageRights: document.getElementById('usageRights').value,
+    delivery: document.getElementById('delivery').value,
+    dueTerms: document.getElementById('dueTerms').value,
+    terminationNotice: document.getElementById('terminationNotice').value,
+    governingLaw: document.getElementById('governingLaw').value,
+    ndaTerm: document.getElementById('ndaTerm').value,
+    confidentiality: document.getElementById('confidentiality').checked,
+    ipOwnership: document.getElementById('ipOwnership').checked,
+    currency: document.getElementById('currency').value,
     color: (document.querySelector('.swatch.selected')||document.querySelector('.swatch')).dataset.color,
     style: (document.querySelector('.style-opt.selected')||document.querySelector('.style-opt')).dataset.style,
     logo: logoDataUrl
@@ -462,6 +624,16 @@ function currentData(style){
     taxLabel: document.getElementById('taxLabel').value || 'Tax',
     taxRate: Number(document.getElementById('taxRate').value) || 0,
     paymentDetails: document.getElementById('paymentDetails').value,
+    clientAddress: document.getElementById('clientAddress').value,
+    clientEmail: document.getElementById('clientEmail').value,
+    contractScope: document.getElementById('contractScope').value,
+    ipOwnership: document.getElementById('ipOwnership').checked,
+    confidentiality: document.getElementById('confidentiality').checked,
+    terminationNotice: document.getElementById('terminationNotice').value,
+    governingLaw: document.getElementById('governingLaw').value,
+    ndaType: document.getElementById('ndaType').value,
+    ndaPurpose: document.getElementById('ndaPurpose').value,
+    ndaTerm: document.getElementById('ndaTerm').value,
     overview: document.getElementById('overview').value,
     scopeItems: Array.from(document.querySelectorAll('.scope-desc')).map(i => i.value).filter(Boolean),
     timeline: Array.from(document.querySelectorAll('#timelineList .item-row')).map(row => ({
@@ -476,17 +648,28 @@ function currentData(style){
   };
 }
 function updatePreviews(){
+  const accent = (document.querySelector('.swatch.selected')||document.querySelector('.swatch')).dataset.color;
   const minEl = document.getElementById('previewMinimal');
   const boldEl = document.getElementById('previewBold');
-  minEl.innerHTML = renderQuoteHTML(currentData('minimal'));
-  boldEl.innerHTML = renderQuoteHTML(currentData('bold'));
-  [minEl, boldEl].forEach(el => {
-    const container = el.parentElement; // .style-preview
-    const scale = container.clientWidth / 680;
-    el.style.transform = `scale(${scale})`;
-  });
+  const numEl = document.getElementById('previewNumeric');
+
+  minEl.innerHTML = `
+    <div style="color:${accent};font-family:'Space Grotesk';font-weight:700;font-size:0.72rem;margin-bottom:8px;">JG-1234</div>
+    <div style="color:#221F1B;"><div class="pv-line full"></div><div class="pv-line short"></div><div class="pv-line full" style="margin-top:10px;"></div></div>
+    <div style="position:absolute;bottom:12px;right:12px;color:${accent};font-family:'Space Grotesk';font-weight:800;font-size:0.95rem;">$1,100</div>`;
+
+  boldEl.innerHTML = `
+    <div style="position:absolute;top:0;left:0;right:0;height:34px;background:${accent};"></div>
+    <div style="margin-top:44px;color:#221F1B;"><div class="pv-line full"></div><div class="pv-line short"></div></div>
+    <div style="position:absolute;bottom:0;left:0;right:0;height:26px;background:${accent};display:flex;align-items:center;justify-content:flex-end;padding-right:12px;color:#fff;font-family:'Space Grotesk';font-weight:800;font-size:0.85rem;">$1,100</div>`;
+
+  numEl.innerHTML = `
+    <div style="position:absolute;inset:0;background:#221F1B;padding:12px;box-sizing:border-box;">
+      <div style="height:3px;width:28px;background:${accent};margin-bottom:10px;"></div>
+      <div style="color:#fff;"><div class="pv-line full" style="opacity:0.25;"></div><div class="pv-line short" style="opacity:0.25;"></div></div>
+      <div style="position:absolute;bottom:12px;left:12px;color:${accent};font-family:'Space Grotesk';font-weight:800;font-size:1.1rem;">$1,100</div>
+    </div>`;
 }
-window.addEventListener('resize', updatePreviews);
 
 document.getElementById('logoUpload').addEventListener('click', () => document.getElementById('logoFile').click());
 document.getElementById('logoFile').addEventListener('change', (e) => {
@@ -513,9 +696,16 @@ document.getElementById('styleOptions').addEventListener('click', (e) => {
     savePrefs();
   }
 });
-['brandName','contactInfo','notes','revisions','usageRights','delivery','clientName','projectTitle','currency'].forEach(id => {
+['brandName','contactInfo','notes','revisions','usageRights','delivery','dueTerms','clientAddress','clientName','projectTitle','currency'].forEach(id => {
   document.getElementById(id).addEventListener('input', () => { updatePreviews(); savePrefs(); });
 });
+
+function nextDocNumber(){
+  let n = Number(localStorage.getItem('jogak_doc_counter')) || 1000;
+  n += 1;
+  localStorage.setItem('jogak_doc_counter', String(n));
+  return n;
+}
 
 document.getElementById('generateBtn').addEventListener('click', async () => {
   const btn = document.getElementById('generateBtn');
@@ -550,6 +740,16 @@ document.getElementById('generateBtn').addEventListener('click', async () => {
     taxLabel: document.getElementById('taxLabel').value || 'Tax',
     taxRate: Number(document.getElementById('taxRate').value) || 0,
     paymentDetails: document.getElementById('paymentDetails').value,
+    clientAddress: document.getElementById('clientAddress').value,
+    clientEmail: document.getElementById('clientEmail').value,
+    contractScope: document.getElementById('contractScope').value,
+    ipOwnership: document.getElementById('ipOwnership').checked,
+    confidentiality: document.getElementById('confidentiality').checked,
+    terminationNotice: document.getElementById('terminationNotice').value,
+    governingLaw: document.getElementById('governingLaw').value,
+    ndaType: document.getElementById('ndaType').value,
+    ndaPurpose: document.getElementById('ndaPurpose').value,
+    ndaTerm: document.getElementById('ndaTerm').value,
     overview: document.getElementById('overview').value,
     scopeItems: Array.from(document.querySelectorAll('.scope-desc')).map(i => i.value).filter(Boolean),
     timeline: Array.from(document.querySelectorAll('#timelineList .item-row')).map(row => ({
@@ -560,13 +760,53 @@ document.getElementById('generateBtn').addEventListener('click', async () => {
     color: (document.querySelector('.swatch.selected')||document.querySelector('.swatch')).dataset.color,
     style: (document.querySelector('.style-opt.selected')||document.querySelector('.style-opt')).dataset.style,
     logo: logoDataUrl,
-    items
+    items,
+    _num: nextDocNumber()
   };
   const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(data))));
   location.href = 'result.html?data=' + encoded;
 });
 
 loadPrefs();
+
+(function applyPrefill(){
+  try{
+    const p = new URLSearchParams(location.search).get('prefill');
+    if(!p) return;
+    const pf = JSON.parse(decodeURIComponent(escape(atob(p))));
+
+    if(pf.docType && pf.docType !== 'quote'){
+      const btn = document.querySelector(`.doctype-btn[data-doctype="${pf.docType}"]`);
+      if(btn) btn.click();
+    }
+    ['projectTitle','brandName','contactInfo','notes','revisions','usageRights','delivery','dueTerms','paymentDetails','overview','currency'].forEach(id => {
+      if(pf[id] !== undefined && document.getElementById(id)){ document.getElementById(id).value = pf[id]; }
+    });
+    if(pf.taxEnabled){ document.getElementById('taxEnabled').checked = true; document.getElementById('taxFields').style.display = 'block'; }
+    if(pf.taxLabel){ document.getElementById('taxLabel').value = pf.taxLabel; }
+    if(pf.taxRate){ document.getElementById('taxRate').value = pf.taxRate; }
+    if(pf.color && document.querySelector(`.swatch[data-color="${pf.color}"]`)){
+      document.querySelectorAll('.swatch').forEach(s => s.classList.toggle('selected', s.dataset.color === pf.color));
+    }
+    if(pf.style && document.querySelector(`.style-opt[data-style="${pf.style}"]`)){
+      document.querySelectorAll('.style-opt').forEach(s => s.classList.toggle('selected', s.dataset.style === pf.style));
+    }
+    if(pf.items && pf.items.length){
+      document.getElementById('itemsList').innerHTML = '';
+      pf.items.forEach(it => addItem(it.desc, it.qty, it.price));
+    }
+    if(pf.scopeItems && pf.scopeItems.length){
+      document.getElementById('scopeList').innerHTML = '';
+      pf.scopeItems.forEach(t => addScope(t));
+    }
+    if(pf.timeline && pf.timeline.length){
+      document.getElementById('timelineList').innerHTML = '';
+      pf.timeline.forEach(t => addTimeline(t.phase, t.duration));
+    }
+    document.getElementById('clientName').focus();
+    updatePreviews();
+  }catch(e){ console.log('Could not load duplicated document data.'); }
+})();
 updatePreviews();
 
 } catch(err) {

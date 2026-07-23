@@ -23,7 +23,12 @@
     <button class="btn" onclick="history.back()">← Edit</button>
     <button class="btn" id="btnMinimal" onclick="setStyle('minimal')">Minimal</button>
     <button class="btn" id="btnBold" onclick="setStyle('bold')">Bold</button>
+    <button class="btn" id="btnNumeric" onclick="setStyle('numeric')">Numeric</button>
     <button class="btn btn-print" onclick="printWithFilename()">Save as PDF</button>
+    <button class="btn" id="copyLinkBtn" onclick="copyDocLink()">Copy link</button>
+    <button class="btn" id="emailClientBtn" style="display:none;" onclick="emailToClient()">Email to client</button>
+    <button class="btn" onclick="duplicateDoc()">Duplicate for new client</button>
+    <button class="btn" id="convertBtn" style="display:none;" onclick="convertToInvoice()">Convert to invoice →</button>
   </div>
   <div id="docHolder"></div>
   <div id="approveHolder" style="max-width:680px;margin:16px auto 0;"></div>
@@ -45,6 +50,53 @@ function proposalSectionsHTML(data, accent){
     </div>` : '';
   const investmentLabel = `<div class="mono" style="margin-bottom:10px;">Investment</div>`;
   return overview + scope + timeline + investmentLabel;
+}
+
+function contractSectionsHTML(data, accent){
+  if(data.docType !== 'contract') return '';
+  const scope = data.contractScope ? `<div class="mono" style="margin-bottom:10px;">Scope of services</div><p style="font-size:0.92rem;line-height:1.6;margin-bottom:24px;color:var(--ink);">${data.contractScope}</p>` : '';
+  const clauses = [];
+  clauses.push(['Independent contractor', `${data.brandName||'The Freelancer'} is engaged as an independent contractor, not an employee. Each party is responsible for their own taxes, insurance, and benefits.`]);
+  if(data.ipOwnership){ clauses.push(['Intellectual property', 'Upon full payment, all final deliverables become the exclusive property of the Client. The Freelancer retains the right to display the work in a portfolio unless otherwise agreed.']); }
+  if(data.confidentiality){ clauses.push(['Confidentiality', 'Both parties agree to keep confidential any non-public information shared during this engagement, and not to disclose it to third parties without written consent.']); }
+  if(data.terminationNotice){ clauses.push(['Termination', `Either party may terminate this agreement with ${data.terminationNotice} written notice. Work completed and expenses incurred up to the termination date remain payable.`]); }
+  if(data.governingLaw){ clauses.push(['Governing law', `This agreement is governed by the laws of ${data.governingLaw}.`]); }
+  const clausesHTML = clauses.length ? clauses.map(([label,text]) => `<div style="margin-bottom:18px;"><div class="mono" style="margin-bottom:6px;font-size:0.72rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--ink-soft);">${label}</div><p style="font-size:0.86rem;line-height:1.6;color:var(--ink);opacity:0.85;">${text}</p></div>`).join('') : '';
+  const feeLabel = `<div class="mono" style="margin-bottom:10px;">Project fee</div>`;
+  return scope + clausesHTML + feeLabel;
+}
+
+function contractFooterHTML(data){
+  if(!['contract','nda'].includes(data.docType)) return '';
+  return `
+    <div style="margin-top:30px;padding-top:22px;border-top:1px solid var(--line);">
+      <div style="display:flex;gap:32px;flex-wrap:wrap;margin-bottom:18px;">
+        <div style="flex:1;min-width:160px;">
+          <div style="border-bottom:1px solid var(--ink);height:32px;"></div>
+          <div style="font-size:0.76rem;color:var(--ink-soft);margin-top:6px;">${data.brandName||'Freelancer'} — Date</div>
+        </div>
+        <div style="flex:1;min-width:160px;">
+          <div style="border-bottom:1px solid var(--ink);height:32px;"></div>
+          <div style="font-size:0.76rem;color:var(--ink-soft);margin-top:6px;">${data.clientName||'Client'} — Date</div>
+        </div>
+      </div>
+      <p style="font-size:0.7rem;line-height:1.5;color:var(--ink-soft);opacity:0.8;">This document is a template for general informational purposes and does not constitute legal advice. Consult a qualified attorney before use.</p>
+    </div>`;
+}
+
+function ndaSectionsHTML(data, accent){
+  if(data.docType !== 'nda') return '';
+  const partyLine = data.ndaType === 'One-way'
+    ? `${data.brandName||'The Freelancer'} (the "Disclosing Party") may share confidential information with ${data.clientName||'the Receiving Party'} (the "Receiving Party") for the purpose described below.`
+    : `${data.brandName||'The Freelancer'} and ${data.clientName||'the other party'} (together, the "Parties") may each share confidential information with the other for the purpose described below.`;
+  const purpose = data.ndaPurpose ? `<p style="font-size:0.92rem;line-height:1.6;margin-bottom:22px;color:var(--ink);">${partyLine} <strong>Purpose:</strong> ${data.ndaPurpose}</p>` : `<p style="font-size:0.92rem;line-height:1.6;margin-bottom:22px;color:var(--ink);">${partyLine}</p>`;
+  const clauses = [
+    ['Confidentiality obligation', 'The Receiving Party agrees to use confidential information solely for the stated purpose, to protect it with reasonable care, and not to disclose it to third parties without prior written consent.'],
+    ['Exclusions', 'This agreement does not apply to information that is already public, was already known to the Receiving Party, or is independently developed without reference to the confidential information.'],
+  ];
+  if(data.ndaTerm){ clauses.push(['Term', `This agreement remains in effect for ${data.ndaTerm}, after which the confidentiality obligations described above will no longer apply.`]); }
+  const clausesHTML = clauses.map(([label,text]) => `<div style="margin-bottom:18px;"><div class="mono" style="margin-bottom:6px;font-size:0.72rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--ink-soft);">${label}</div><p style="font-size:0.86rem;line-height:1.6;color:var(--ink);opacity:0.85;">${text}</p></div>`).join('');
+  return purpose + clausesHTML;
 }
 
 function termsHTML(data){
@@ -92,6 +144,35 @@ function renderQuoteHTML(data){
   const quoteNum = 'JG-' + (data._num || Math.floor(1000+Math.random()*9000));
   const logoImg = data.logo ? `<img src="${data.logo}" style="width:36px;height:36px;border-radius:6px;object-fit:cover;">` : `<span style="width:36px;height:36px;border-radius:6px;background:${accent};display:inline-block;"></span>`;
 
+  if(data.style === 'numeric'){
+    const numRows = (data.items||[]).map(item=>{
+      const lineTotal=(item.qty||1)*(item.price||0);
+      return `<div style="display:flex;justify-content:space-between;gap:16px;padding:15px 0;border-bottom:1px solid rgba(255,255,255,0.12);font-size:0.95rem;"><span style="min-width:0;">${item.desc}</span><span class="mono" style="flex-shrink:0;">${fmt(lineTotal)}</span></div>`;
+    }).join('');
+    return `
+    <div class="doc doc-numeric" style="--accent:${accent};background:#221F1B;color:#FAF7F1;--ink:#FAF7F1;--ink-soft:#B8B2A5;--line:rgba(255,255,255,0.15);min-height:640px;">
+      <div style="height:5px;background:${accent};"></div>
+      <div style="padding:44px 40px 0;">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px;margin-bottom:34px;">
+          <div class="mono" style="font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;opacity:0.6;">${data.brandName||'Your studio'}${data.contactInfo? ' · '+data.contactInfo:''}</div>
+          <div class="mono" style="font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;opacity:0.6;text-align:right;">${quoteNum} · ${dateStr}</div>
+        </div>
+        <div style="font-family:'Space Grotesk';font-weight:800;font-size:1.5rem;margin-bottom:2px;">${data.clientName||'Client'}</div>
+        ${data.docType==='invoice' && data.clientAddress ? `<div style="font-size:0.8rem;opacity:0.6;margin-bottom:4px;">${data.clientAddress}</div>` : ''}
+        <div style="opacity:0.65;font-size:0.92rem;margin-bottom:30px;">${data.projectTitle||''}</div>
+        ${proposalSectionsHTML(data, accent)}${contractSectionsHTML(data, accent)}${ndaSectionsHTML(data, accent)}
+        ${data.docType!=='nda' ? numRows : ''}
+        ${taxRowsHTML ? `<div style="padding-top:14px;opacity:0.8;">${taxRowsHTML}</div>` : ''}
+      </div>
+      ${data.docType!=='nda' ? `<div style="padding:34px 40px 10px;">
+        <div class="mono" style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.08em;opacity:0.55;">${data.docType==='invoice' ? 'Amount due'+(data.dueTerms?' · '+dueDateLabel(data.dueTerms):'') : (data.docType==='proposal' ? 'Investment' : data.docType==='contract' ? 'Project fee' : 'Total')}</div>
+        <div class="mono" style="font-family:'Space Grotesk';font-weight:800;font-size:3rem;line-height:1.1;margin-top:6px;color:${accent};">${fmt(grandTotal)}</div>
+      </div>` : '<div style="padding-top:10px;"></div>'}
+      ${data.docType==='invoice' && data.paymentDetails ? `<div style="padding:0 40px;font-size:0.82rem;opacity:0.7;margin-top:6px;"><span class="mono" style="opacity:0.6;">Payment</span><br>${data.paymentDetails}</div>` : ''}
+      ${(data.notes || data.revisions || data.usageRights || data.delivery) ? `<div style="padding:20px 40px 40px;font-size:0.85rem;opacity:0.7;border-top:1px solid rgba(255,255,255,0.15);margin-top:20px;">${data.notes||''}${termsHTML(data)}</div>` : `<div style="padding-bottom:34px;"></div>`}
+      ${contractFooterHTML(data)}
+    </div>`;
+  }
   if(data.style === 'bold'){
     return `
     <div class="doc doc-bold" style="--accent:${accent};">
@@ -107,20 +188,22 @@ function renderQuoteHTML(data){
       <div class="doc-body">
         <div class="mono" style="margin-bottom:4px;">Prepared for</div>
         <div class="client-name">${data.clientName||'Client'}</div>
+        ${data.docType==='invoice' && data.clientAddress ? `<div style="font-size:0.8rem;color:var(--ink-soft);margin-top:2px;">${data.clientAddress}</div>` : ''}
         <div style="color:var(--ink-soft);font-size:0.9rem;margin-bottom:22px;">${data.projectTitle||''}</div>
-        ${proposalSectionsHTML(data, accent)}
-        <table class="bold-table"><thead><tr><th>Description</th><th class="num">Qty</th><th class="num">Price</th><th class="num">Total</th></tr></thead><tbody>${rows}</tbody></table>
-        ${taxRowsHTML}
+        ${proposalSectionsHTML(data, accent)}${contractSectionsHTML(data, accent)}${ndaSectionsHTML(data, accent)}
+        ${data.docType!=='nda' ? `<table class="bold-table"><thead><tr><th>Description</th><th class="num">Qty</th><th class="num">Price</th><th class="num">Total</th></tr></thead><tbody>${rows}</tbody></table>
+        ${taxRowsHTML}` : ''}
       </div>
-      <div class="bold-total-band">
-        <div class="bold-total-label">${data.docType==='invoice' ? 'Amount due' : 'Total due'} from ${data.clientName||'client'}${data.docType==='invoice' && data.dueTerms ? ' · '+dueDateLabel(data.dueTerms) : ''}</div>
+      ${data.docType!=='nda' ? `<div class="bold-total-band">
+        <div class="bold-total-label">${data.docType==='invoice' ? 'Amount due' : data.docType==='contract' ? 'Project fee' : 'Total due'} ${data.docType==='contract' ? '—' : 'from'} ${data.clientName||'client'}${data.docType==='invoice' && data.dueTerms ? ' · '+dueDateLabel(data.dueTerms) : ''}</div>
         <div class="bold-total-amount">${fmt(grandTotal)}</div>
-      </div>
+      </div>` : ''}
       <div class="doc-body" style="padding-top:16px;">
         ${data.docType==='invoice' && data.paymentDetails ? `<div style="font-size:0.82rem;color:var(--ink-soft);margin-bottom:14px;"><span class="mono">Payment</span><br>${data.paymentDetails}</div>` : ''}
         <div style="border-top:1px solid var(--line);padding-top:16px;font-size:0.85rem;color:var(--ink-soft);">
           ${data.notes ? data.notes+'<br>' : ''}Thank you for the opportunity to work together.${termsHTML(data)}
-          ${data.docType==='invoice' ? '' : `<div style="font-size:0.76rem;margin-top:6px;">Valid until ${validStr}</div>`}
+          ${contractFooterHTML(data)}
+          ${['invoice','contract','nda'].includes(data.docType) ? '' : `<div style="font-size:0.76rem;margin-top:6px;">Valid until ${validStr}</div>`}
         </div>
       </div>
     </div>`;
@@ -137,20 +220,21 @@ function renderQuoteHTML(data){
       <div class="mono" style="text-align:right;">${quoteNum}<br>${dateStr}</div>
     </div>
     <div class="mono" style="margin-bottom:2px;">Prepared for</div>
-    <div class="client-name" style="margin-bottom:36px;">${data.clientName||'Client'}<div style="font-weight:400;font-size:0.85rem;color:var(--ink-soft);font-family:'Inter';margin-top:2px;">${data.projectTitle||''}</div></div>
-    ${proposalSectionsHTML(data, accent)}
-    <table class="min-table"><thead><tr><th>Description</th><th class="num">Qty</th><th class="num">Price</th><th class="num">Total</th></tr></thead><tbody>${rows}</tbody></table>
+    <div class="client-name" style="margin-bottom:36px;">${data.clientName||'Client'}<div style="font-weight:400;font-size:0.85rem;color:var(--ink-soft);font-family:'Inter';margin-top:2px;">${data.projectTitle||''}</div>${data.docType==='invoice' && data.clientAddress ? `<div style="font-weight:400;font-size:0.8rem;color:var(--ink-soft);font-family:'Inter';margin-top:2px;">${data.clientAddress}</div>` : ''}</div>
+    ${proposalSectionsHTML(data, accent)}${contractSectionsHTML(data, accent)}${ndaSectionsHTML(data, accent)}
+    ${data.docType!=='nda' ? `<table class="min-table"><thead><tr><th>Description</th><th class="num">Qty</th><th class="num">Price</th><th class="num">Total</th></tr></thead><tbody>${rows}</tbody></table>
     ${taxRowsHTML ? `<div style="margin-top:14px;">${taxRowsHTML}</div>` : ''}
     <div style="display:flex;justify-content:flex-end;margin:26px 0 40px;">
       <div style="text-align:right;">
-        <div class="mono">${data.docType==='invoice' ? 'Amount due'+(data.dueTerms?' · '+dueDateLabel(data.dueTerms):'') : 'Total'}</div>
+        <div class="mono">${data.docType==='invoice' ? 'Amount due'+(data.dueTerms?' · '+dueDateLabel(data.dueTerms):'') : data.docType==='contract' ? 'Project fee' : 'Total'}</div>
         <div class="min-total" style="color:${accent};">${fmt(grandTotal)}</div>
       </div>
-    </div>
+    </div>` : ''}
     ${data.docType==='invoice' && data.paymentDetails ? `<div style="font-size:0.82rem;color:var(--ink-soft);margin-bottom:14px;"><span class="mono">Payment</span><br>${data.paymentDetails}</div>` : ''}
     <div style="border-top:1px solid var(--line);padding-top:16px;font-size:0.85rem;color:var(--ink-soft);">
       ${data.notes ? data.notes+'<br>' : ''}Thank you for the opportunity to work together.${termsHTML(data)}
-      ${data.docType==='invoice' ? '' : `<div style="font-size:0.76rem;margin-top:6px;">Valid until ${validStr}</div>`}
+      ${contractFooterHTML(data)}
+      ${['invoice','contract','nda'].includes(data.docType) ? '' : `<div style="font-size:0.76rem;margin-top:6px;">Valid until ${validStr}</div>`}
     </div>
     </div>
   </div>`;
@@ -159,7 +243,7 @@ function renderQuoteHTML(data){
 /* shared CSS for the doc (injected once) */
 const styleTag = document.createElement('style');
 styleTag.textContent = `
-  .doc{font-family:'Inter',sans-serif;color:var(--ink);background:var(--paper);border-radius:6px;box-shadow:0 2px 12px rgba(0,0,0,0.08);overflow:hidden;}
+  .doc{font-family:'Inter',sans-serif;color:var(--ink);background:var(--paper);border-radius:6px;box-shadow:0 2px 12px rgba(0,0,0,0.08);overflow:hidden;width:100%;box-sizing:border-box;}
   .jogak-mark{display:inline-grid;grid-template-columns:1fr 1fr;width:14px;height:14px;border-radius:3px;overflow:hidden;flex-shrink:0;}
   .jogak-mark span:nth-child(1){background:var(--accent-a,var(--jade,#2E6B5E));}
   .jogak-mark span:nth-child(2){background:var(--accent-b,var(--ochre,#C97B3D));}
@@ -198,16 +282,68 @@ let data = {};
 try { data = JSON.parse(decodeURIComponent(escape(atob(params.get('data')||'')))); }
 catch(e){ data = { clientName:'Sample Client', projectTitle:'Sample project', currency:'USD', color:'#2E6B5E', style:'minimal',
   items:[{desc:'Homepage design',qty:1,price:800},{desc:'Two rounds of revisions',qty:1,price:150}] }; }
-data._num = Math.floor(1000+Math.random()*9000);
+if(!data._num){ data._num = Math.floor(1000+Math.random()*9000); }
 
 const holder = document.getElementById('docHolder');
 
-function printWithFilename(){
-  const docLabel = data.docType === 'invoice' ? 'Invoice' : data.docType === 'proposal' ? 'Proposal' : 'Quote';
+if(data.clientEmail){
+  document.getElementById('emailClientBtn').style.display = 'inline-block';
+}
+function emailToClient(){
+  const docLabel = data.docType === 'invoice' ? 'invoice' : data.docType === 'proposal' ? 'proposal' : data.docType === 'contract' ? 'contract' : data.docType === 'nda' ? 'NDA' : 'quote';
+  const subject = encodeURIComponent(`Your ${docLabel} from ${data.brandName || 'us'}`);
+  const body = encodeURIComponent(`Hi ${data.clientName || 'there'},\n\nHere's your ${docLabel} — you can view it here:\n${location.href}\n\nLet me know if you have any questions.\n\n${data.brandName || ''}`);
+  window.location.href = `mailto:${data.clientEmail}?subject=${subject}&body=${body}`;
+}
+
+if(['quote','proposal','contract'].includes(data.docType||'quote')){
+  document.getElementById('convertBtn').style.display = 'inline-block';
+}
+
+function convertToInvoice(){
+  const invoiceData = Object.assign({}, data, {
+    docType: 'invoice',
+    dueTerms: 'Net 30',
+    taxEnabled: false,
+    taxLabel: 'Tax',
+    taxRate: 0,
+    paymentDetails: data.paymentDetails || '',
+    clientAddress: data.clientAddress || ''
+  });
+  let n = Number(localStorage.getItem('jogak_doc_counter')) || 1000;
+  n += 1;
+  localStorage.setItem('jogak_doc_counter', String(n));
+  invoiceData._num = n;
+  const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(invoiceData))));
+  location.href = 'result.html?data=' + encoded;
+}
+
+function duplicateDoc(){
+  const pf = Object.assign({}, data);
+  delete pf.clientName; delete pf.clientEmail; delete pf.clientAddress; delete pf._num;
+  const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(pf))));
+  location.href = 'index.html?prefill=' + encoded;
+}
+
+function copyDocLink(){
+  const btn = document.getElementById('copyLinkBtn');
+  navigator.clipboard.writeText(location.href).then(() => {
+    const original = btn.textContent;
+    btn.textContent = '✓ Copied';
+    setTimeout(() => { btn.textContent = original; }, 1500);
+  }).catch(() => {
+    btn.textContent = 'Copy failed — select URL manually';
+    setTimeout(() => { btn.textContent = 'Copy link'; }, 2000);
+  });
+}
+
+async function printWithFilename(){
+  const docLabel = data.docType === 'invoice' ? 'Invoice' : data.docType === 'proposal' ? 'Proposal' : data.docType === 'contract' ? 'Contract' : data.docType === 'nda' ? 'NDA' : 'Quote';
   const clientSlug = (data.clientName || 'Client').replace(/[^a-zA-Z0-9]+/g,'_');
   const dateSlug = new Date().toISOString().slice(0,10);
   const originalTitle = document.title;
   document.title = `Jogak_${docLabel}_${clientSlug}_${dateSlug}`;
+  try{ if(document.fonts && document.fonts.ready){ await document.fonts.ready; } }catch(e){}
   window.print();
   setTimeout(() => { document.title = originalTitle; }, 500);
 }
@@ -219,6 +355,7 @@ function setStyle(s){
   holder.innerHTML = renderQuoteHTML(data);
   document.getElementById('btnMinimal').classList.toggle('active', s==='minimal');
   document.getElementById('btnBold').classList.toggle('active', s==='bold');
+  document.getElementById('btnNumeric').classList.toggle('active', s==='numeric');
 }
 setStyle(currentStyle);
 
@@ -227,7 +364,7 @@ function renderApprove(){
   const freelancerEmail = (data.contactInfo||'').match(/[\w.+-]+@[\w-]+\.[\w.-]+/);
   holder.innerHTML = `
     <div style="background:#fff;border:1px solid var(--line);border-radius:6px;padding:22px 24px;">
-      <div style="font-family:'Space Grotesk';font-weight:600;font-size:0.95rem;margin-bottom:12px;">${data.docType==='invoice' ? 'Confirm receipt of this invoice' : 'Approve this '+(data.docType==='proposal'?'proposal':'quote')}</div>
+      <div style="font-family:'Space Grotesk';font-weight:600;font-size:0.95rem;margin-bottom:12px;">${data.docType==='invoice' ? 'Confirm receipt of this invoice' : data.docType==='contract' ? 'Agree to the terms of this contract' : data.docType==='nda' ? 'Agree to this NDA' : 'Approve this '+(data.docType==='proposal'?'proposal':'quote')}</div>
       <div style="display:flex;gap:10px;flex-wrap:wrap;">
         <input id="approveName" type="text" placeholder="Type your name to approve" style="flex:1;min-width:180px;padding:11px 13px;border:1px solid var(--line);border-radius:4px;font-family:'Inter';font-size:0.92rem;">
         <button class="btn btn-print" id="approveBtn" style="margin:0;">Approve</button>
